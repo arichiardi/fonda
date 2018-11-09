@@ -1,0 +1,41 @@
+{
+  "name": "@ep-npm/fonda",
+  "description": "Utility for transforming Terraform variables to environment variables.",
+  "license": "Apache-2.0",
+  "author": "Elastic Path Software",
+  "license": "Unlicense",
+  "contributors": [
+    "David Cerezo Inigo <david.cerezoinigo@elasticpath.com>",
+    "Andrea Richiardi <andrea.richiardi@elasticpath.com>",
+    "Sebastian Schulz <sebastian.schulz@elasticpath.com>"
+  ],
+  "keywords": [
+    "elastic",
+    "path",
+    "elasticpath",
+    "clojurescript",
+    "clojure",
+    "async",
+    "pipeline"
+  ],
+  "files": [
+    "src/*",
+    "dist/*"
+  ],
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/elasticpath/fonda"
+  },
+  "scripts": {
+    "repl": "yarn shadow-cljs watch az",
+    "watch": "yarn shadow-cljs watch az",
+    "build": "yarn shadow-cljs release az",
+    "test": "yarn shadow-cljs release test && node .cljs/test.js",
+    "test:watch": "yarn shadow-cljs watch test"
+  },
+  "devDependencies": {
+    "shadow-cljs": "2.7.0"
+  },
+  "dependencies": {
+  }
+}

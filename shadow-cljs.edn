@@ -1,0 +1,17 @@
+{:deps {:aliases [:dev :test]}
+ :builds {:lib {:target :node-library
+                :output-to "dist/fonda.js"
+                :release {:compiler-options {:optimizations :simple
+                                             :variable-renaming :off
+                                             :property-renaming :off
+                                             :pretty-print true
+                                             :source-map true}}}
+          :test {:target :node-test
+                 :output-to "dist/test.js"
+                 :autorun true
+                 {:compiler-options {:optimizations :simple
+                                     :variable-renaming :off
+                                     :property-renaming :off
+                                     :pretty-print true
+                                     :source-map true}
+                  :autorun false}}}}
