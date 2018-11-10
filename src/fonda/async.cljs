@@ -1,7 +1,12 @@
 (ns fonda.async)
 
-(defprotocol Async)
+(defprotocol AsyncContext
+  (continue [t f]))
 
 (defn async?
   [x]
-  (satisfies? Async x))
+  (satisfies? AsyncContext x))
+
+(extend-protocol AsyncContext
+  js/Promise
+  (continue [t f] (.then t f)))

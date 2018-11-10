@@ -20,3 +20,5 @@ cp
 **/.cpcache
 **/.cljs*
 package-lock.json
+*.iml
+.idea

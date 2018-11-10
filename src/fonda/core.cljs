@@ -1,29 +1,26 @@
 (ns fonda.core
-  #?(:cljs (:refer-clojure :exclude [iter]))
   (:require [fonda.async :as a])
-  )
+  (:refer-clojure :exclude [iter]))
 
-(defrecord Context [error queue on-complete on-error on-anomaly])
+
+(defrecord Context [error anomaly step-log on-complete on-error on-anomaly])
 
 (defn- try-f [ctx f]
   (if f
     (try
       (f ctx)
-      (catch #?(:clj Exception :cljs :default) e
+      (catch :default e
         (assoc ctx :error e)))
     ctx))
 
 (defn- context
-  ([request queue]
-   (new Context request nil nil queue nil nil nil))
-  ([request queue on-complete on-error]
-   (new Context request nil nil queue nil on-complete on-error)))
+  [initial-ctx on-complete on-error on-anomaly]
+  #_(new Context  nil nil [] on-complete on-error on-anomaly))
 
 ;;
 ;; Public API:
 ;;
 
 (defn execute
-  ([config input on-complete on-anomaly on-error]
-
+  ([config steps on-complete on-anomaly on-error]
    ))

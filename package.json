@@ -27,14 +27,14 @@
     "url": "https://github.com/elasticpath/fonda"
   },
   "scripts": {
-    "repl": "yarn shadow-cljs watch az",
-    "watch": "yarn shadow-cljs watch az",
-    "build": "yarn shadow-cljs release az",
+    "repl": "yarn shadow-cljs watch lib",
+    "watch": "yarn shadow-cljs watch lib",
+    "build": "yarn shadow-cljs release lib",
     "test": "yarn shadow-cljs release test && node .cljs/test.js",
     "test:watch": "yarn shadow-cljs watch test"
   },
   "devDependencies": {
-    "shadow-cljs": "2.7.0"
+    "shadow-cljs": "2.6.23"
   },
   "dependencies": {
   }
