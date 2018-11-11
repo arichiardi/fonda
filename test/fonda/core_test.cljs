@@ -1,4 +1,4 @@
-(ns fonda.core-execute-test
+(ns fonda.core-test
   (:require [clojure.test :as test :refer-macros [deftest is testing async]]
             [fonda.core :as core]))
 
