@@ -14,7 +14,6 @@
                                :message  message}}))
 
 #_(execute
-    {}
 
     {
 
@@ -214,8 +213,8 @@
   (testing "Passing one synchronous exceptional tap should call on-exception with the exception"
     (async done
       (let [tap-res (js/Error "Bad error")
-            tap {:name     "resolver name"
-                 :tap (fn [_] (throw tap-res))}]
+            tap {:name "resolver name"
+                 :tap  (fn [_] (throw tap-res))}]
         (fonda/execute {} [tap] nil
                        (fn [_])
                        (fn [_])
@@ -267,9 +266,9 @@
 (deftest one-tap-receives-empty-log-test
   (testing "A tap should be called with an empty step-log on the runtime context"
     (async done
-      (let [tap {:name     "tap name"
-                 :tap (fn [{:keys [step-log]}]
-                        (is (= step-log []) (done)))}]
+      (let [tap {:name "tap name"
+                 :tap  (fn [{:keys [step-log]}]
+                         (is (= step-log []) (done)))}]
         (fonda/execute {}
                        [tap] nil
                        (fn [_])
@@ -435,8 +434,8 @@
                          :resolver (fn [_]
                                      (js/Promise.resolve (swap! step1-counter inc)))}
 
-                        {:name     "step2"
-                         :tap (fn [_] (js/Promise.reject exception))}
+                        {:name "step2"
+                         :tap  (fn [_] (js/Promise.reject exception))}
 
                         {:path     [:step3]
                          :name     "step1"
