@@ -15,8 +15,40 @@
     (assoc runtime-ctx :anomaly res)
     (assoc-in runtime-ctx (concat [:ctx] path) res)))
 
-(defn- try-step [{:as runtime-ctx :keys [ctx log-step-fn]}
-                 {:as step :keys [path name resolver tap]}]
+
+(defn set-retry-delayer-error [runtime-ctx err]
+  (assoc runtime-ctx :error err))
+
+
+(defn set-retry-delayer-result [{:as runtime-ctx :keys [anomaly?]}
+                                {:as step :keys [retry]}
+                                repeat-fn
+                                res]
+  (let [{:keys [path]} retry]
+    (if (anomaly? res)
+      (assoc runtime-ctx :anomaly res)
+      (repeat-fn
+        (assoc-in runtime-ctx (concat [:ctx] path) res)))))
+
+(defn try-retry-delayer [{:as runtime-ctx :keys [ctx anomaly?]}
+                         {:as step :keys [retry path]}
+                         resolver-anomaly]
+  (let [{:keys [path name delayer]} retry
+        res (delayer {:ctx ctx :anomaly resolver-anomaly})
+        set-result (partial set-retry-delayer-result runtime-ctx step #(try-retry-delayer % step resolver-anomaly))
+        set-error (partial set-retry-delayer-error runtime-ctx)]
+
+    (try
+
+      (if (a/async? res)
+        (a/continue res set-result set-error)
+        (set-result res))
+
+      (catch :default e
+        (set-error e)))))
+
+(defn- try-step [{:as runtime-ctx :keys [ctx log-step-fn anomaly?]}
+                 {:as step :keys [path name resolver tap retry]}]
   (try
     (let [res (if resolver (resolver ctx) (tap runtime-ctx))
           set-result-fn (cond
@@ -24,9 +56,11 @@
                           (not (nil? resolver)) (partial set-resolver-result runtime-ctx path))
           set-result #(-> (set-result-fn %) (update :step-log log-step-fn step res))]
 
-      (if (a/async? res)
-        (a/continue res set-result #(assoc runtime-ctx :error %))
-        (set-result res)))
+      (cond
+        (a/async? res) (a/continue res set-result #(assoc runtime-ctx :error %))
+        (and (anomaly? res) retry) (try-retry-delayer runtime-ctx step res)
+
+        :else (set-result res)))
 
     (catch :default e
       (assoc runtime-ctx :error e))))
