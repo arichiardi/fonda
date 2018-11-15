@@ -6,6 +6,12 @@ An async pipeline approach to functional core - imperative shell.
 
 Fonda sequentially executes an (a)synchronous series of steps, one after the other, augmenting a context map.
 
+Fonda distinguishes between exception errors and [anomaly](https://github.com/cognitect-labs/anomalies/blob/master/src/cognitect/anomalies.cljc) errors
+
+Anomalies are just data that define an abnormally. By default, Fonda wraps the anomalies in a map with the key :anomaly.
+
+It is possible to create custom anomalies by passing an anomaly? function in the configuration.
+
 ## Syntax
 
 ```clojure
@@ -14,7 +20,7 @@ Fonda sequentially executes an (a)synchronous series of steps, one after the oth
 - **config** A map with:
 
       - [opt] anomaly?      A function that gets a map and determines if it is an anomaly
-      - [opt] exception-tap A function gets called with the runtime-context when there is an exception
+      - [opt] exception-tap A function gets called with the runtime-context when there is an exception.
       - [opt] anomaly-tap   A function that gets called with te runtime-context when a step returns an anomaly
       - [opt] log-step-fn   A function that defines how each step adds information to the log
 
@@ -25,9 +31,9 @@ Fonda sequentially executes an (a)synchronous series of steps, one after the oth
        - name: The name of the step
 
       Processor:
-       - processor: A function that gets the context and assocs the result into it on the given path
-       - path:     Path where to assoc the result of the processor
-       - name:     The name of the step
+       - processor: A function that gets the context returns a result that is assoced into the context on the given path
+       - path:      Path where to assoc the result of the processor
+       - name:      The name of the step
        
 - **initial-ctx** The context data that gets passed to the steps functions. Must be a map
                
@@ -39,11 +45,11 @@ Fonda sequentially executes an (a)synchronous series of steps, one after the oth
 
 There are two types of steps: **taps** and **processors**.
 
-Processors get a path and a function. The data returned will be placed on the context on that path.
+Processors get a path and a function. The data returned will be placed in the context on that path.
 
 Taps only get a function, and if they succeed, the result is ignored.
 
-If any step returns an anomaly, or triggers an exception, the execution of the steps stops and the global taps and 
+If any step returns an anomaly, or triggers an exception, the execution of the steps stops and the global taps 
 callbacks will be called.
 
 If any step returns an anomaly, the anomaly-tap will be called with the RuntimeContext, and then the on-anomaly callback
@@ -55,7 +61,7 @@ If any step triggers an exception, the exception-tap will be called with the Run
 Processors are maps with the following keys:
 
 - **processor** A function that gets a context map and returns data. Can be asynchronous.
-               If it returns an anomaly, or it triggers an error, the steps execution will be interrupted.
+               If it returns an anomaly, or it triggers an error, further steps execution will be short-circuited.
 - **path** A vector that determines where in the context will the resolve result be associated.
 - **name** A descriptive name for the step
 
@@ -97,13 +103,14 @@ the context that is passed to each step. It also contains:
 
     [
      ;; Blocking tap, it short-circuits if it throws an exception
-     {:tap (fn [ctx])}
+     {:tap          (fn [ctx])}
 
-     {:path     [:something]
-      :name     "step-name"
+     {:processor    (fn [])
+      :path         [:something]
+      :name         "step-name"
 
       ;; Processor can return data, an anomaly, or throw an exception
-      :processor (fn [])}
+      }
      ]
 
     ;; Initial context
@@ -123,14 +130,35 @@ the context that is passed to each step. It also contains:
 
 ```clojure
 (fonda/execute
-  {:exception-tap (fn [{:keys [error]}] (js/console.log "Exception happened:" error))
-   :anomaly-tap   (fn [{:keys [anomaly]}] (js/console.log "An anomaly happened:" anomaly))}
-  [{:path [:remote-thing] :processor (fn [ctx] (ajax/get "http://remote-thing-url"))}
-   {:tap (fn [{:keys [remote-thing]}] (js/console.log "remote thing:" ()))}
-   {:path [:remote-thing-processed] :processor (fn [{:keys [remote-thing]} (process-remote-thing remote-thing)])}]
+  {:exception-tap     (fn [{:keys [error]}] (js/console.log "Exception happened:" error))
+   
+   :anomaly-tap       (fn [{:keys [anomaly]}] (js/console.log "An anomaly happened:" anomaly))}
+  
+  [
+   ;; Processor that retrieves data remotely
+   {:processor        (fn [ctx] (ajax/get "http://remote-thing-url"))
+    :name             "get-remote-thing"
+    :path             [:remote-thing] }
+   
+   ;; Processor that processes the data
+   {:processor        (fn [{:keys [remote-thing]}] (process-remote-thing remote-thing))
+    :name             "process-thing"
+    :path             [:remote-thing-processed]}
+   
+   ;; Tap that logs things
+   {:tap              (fn [{:keys [remote-thing]}] (js/console.log "remote thing:"))}
+   ]
 
-  (fn [{:keys [remote-thing-processed]}] (call-on-complete-cb remote-thing-processed))
-  (fn [anomaly] (call-on-anomaly-cb anomaly))
-  (fn [error] (call-on-error-cb error)))
+  ;; On complete
+  (fn [{:keys [remote-thing-processed]}] 
+   (call-on-complete-cb remote-thing-processed))
+   
+  ;; On anomaly
+  (fn [anomaly] 
+   (call-on-anomaly-cb anomaly))
+   
+  ;; On error
+  (fn [error] 
+   (call-on-error-cb error)))
 
 ```
