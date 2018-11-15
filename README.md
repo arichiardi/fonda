@@ -19,7 +19,7 @@ which never meant to be caught and are usually caused by programming bugs.
  
 By default, Fonda wraps the anomalies in a map with the key `:cognitect.anomalies/anomaly`.
 
-It is possible to create custom anomalies by passing an anomaly? function in the configuration.
+It is possible to redefine what an anomaly is by passing the predicate anomaly? to the configuration.
 
 ## Syntax
 
@@ -29,8 +29,8 @@ It is possible to create custom anomalies by passing an anomaly? function in the
 - **config** A map with:
 
       - [opt] :anomaly?      A function that gets a map and determines if it is an anomaly
-      - [opt] :log-exception A function gets called with the runtime context when there is an exception.
-      - [opt] :log-anomaly   A function that gets called with te runtime context when a step returns an anomaly
+      - [opt] :log-exception A function that gets called with the [runtime](#runtimeContext) when there is an exception.
+      - [opt] :log-anomaly   A function that gets called with te [anomalies](https://github.com/cognitect-labs/anomalies/blob/master/src/cognitect/anomalies.cljc)runtime context when a step returns an anomaly
       - [opt] :log-success   A function that gets called after all the steps succeeded
       
 - **steps**: Each item on the steps collection must be either a Tap, or a Processor
@@ -83,59 +83,15 @@ Taps are maps with the following keys:
             if it returns an anomaly, or it triggers an exception
 - **:name**  A descriptive name for the step
 
-### Runtime context
+### <a name="runtimeContext"></a>Runtime context
 
-Global taps are called with the runtime context. The runtime context is a map that contains, among other things, 
+Log functions are called with the runtime context. The runtime context is a map that contains, among other things, 
 the context that is passed to each step. It also contains:
 
 - **:step-log** A collection of step logs. By default only step names are logged.
 
 
-## Examples
-
-```clojure
-(fonda/execute
-
-    {
-
-     ;; [opt] By default, clojure anomaly
-     :anomaly?      (fn [x] (:my-weird-error x))
-
-     ;; [opt]
-     :log-exception (fn [{:keys [ctx exception step-log]}])
-
-     :log-anomaly   (fn [{:keys [ctx anomaly step-log]}])
-     
-     :log-success   (fn [{:keys [ctx step-log]}])
-
-     }
-
-    [
-     ;; Blocking tap, it short-circuits if it throws an exception
-     {:tap          (fn [ctx])}
-
-     {:processor    (fn [])
-      :path         [:something]
-      :name         "step-name"
-
-      ;; Processor can return data, an anomaly, or throw an exception
-      }
-     ]
-
-    ;; Initial context
-    {}
-
-    ;; success cb
-    (fn [result])
-
-    ;; anomaly cb
-    (fn [anomaly])
-
-    ;; exception cb
-    (fn [exception])
-
-    )
-```
+## Example
 
 ```clojure
 (fonda/execute
