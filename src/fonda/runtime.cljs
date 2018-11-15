@@ -1,34 +1,40 @@
 (ns fonda.runtime
   (:require [cljs.spec.alpha :as s]
-            [fonda.step :as st]))
+            [fonda.step :as st]
+            [fonda.async :as a]))
 
 (s/def ::anomaly? fn?)
-(s/def ::exception-tap (s/nilable fn?))
-(s/def ::anomaly-tap (s/nilable fn?))
+(s/def ::log-exception (s/nilable fn?))
+(s/def ::log-anomaly (s/nilable fn?))
+(s/def ::log-success (s/nilable fn?))
 (s/def ::ctx map?)
-(s/def ::error (s/nilable #(instance? js/Error %)))
+(s/def ::exception (s/nilable #(instance? js/Error %)))
 (s/def ::anomaly (s/nilable any?))
-(s/def ::on-complete fn?)
+(s/def ::on-success fn?)
 (s/def ::on-exception fn?)
 (s/def ::on-anomaly fn?)
 (s/def ::queue (s/coll-of ::st/step))
 (s/def ::step-log any?)
 (s/def ::log-step-fn fn?)
 
-(s/def ::runtime-context
+(s/def ::runtime-context-async a/async?)
+(s/def ::runtime-context-map
   (s/keys :req-un [::anomaly?
-                   ::exception-tap
-                   ::anomaly-tap
+                   ::log-exception
+                   ::log-anomaly
+                   ::log-success
                    ::ctx
-                   ::on-complete
+                   ::on-success
                    ::on-anomaly
                    ::on-exception
                    ::queue
                    ::step-log
                    ::log-step-fn
-                   ::error
+                   ::exception
                    ::anomaly]))
 
+(s/def ::runtime-context (s/or :async ::runtime-context-async
+                               :sync ::runtime-context-map))
 (defrecord RuntimeContext
   [
 
@@ -36,22 +42,25 @@
    anomaly?
 
    ;; A function gets called with the runtime-context when there is an exception
-   exception-tap
+   log-exception
 
-   ;; A function that gets called with te runtime-context when a step returns an anomaly
-   anomaly-tap
+   ;; A function that gets called with the runtime-context when a step returns an anomaly
+   log-anomaly
+
+   ;; A function that gets called with the runtime-context after all steps succeeded
+   log-success
 
    ;; The context data that gets passed to the step functions
    ctx
 
    ;; An exception thrown by a step
-   error
+   exception
 
    ;; An anomaly returned by a step
    anomaly
 
    ;; Callback function that gets called with the context after all the steps succeeded
-   on-complete
+   on-success
 
    ;; Callback function that gets called with an exception that a step triggered
    on-exception

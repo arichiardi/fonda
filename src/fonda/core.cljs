@@ -7,8 +7,8 @@
 
 (s/def ::config
   (s/keys :opt-un [::r/anomaly?
-                   ::r/exception-tap
-                   ::r/anomaly-tap
+                   ::r/log-exception
+                   ::r/log-anomaly
                    ::r/log-step-fn]))
 
 ;;(s/def ::config-spell (ss/keys :opt-un config-keys))
@@ -22,7 +22,7 @@
   :args (s/cat :config ::config
                :steps ::steps
                :initial-ctx ::r/ctx
-               :on-complete ::r/on-complete
+               :on-success ::r/on-success
                :on-anomaly ::r/on-anomaly
                :on-exception ::r/on-exception))
 (defn execute
@@ -32,8 +32,9 @@
 
   - `config`: A map with:
       - [opt] anomaly?      A function that gets a map and determines if it is an anomaly
-      - [opt] exception-tap A function gets called with the runtime-context when there is an exception
-      - [opt] anomaly-tap   A function that gets called with te runtime-context when a step returns an anomaly
+      - [opt] log-exception A function gets called with the runtime-context when there is an exception
+      - [opt] log-anomaly   A function that gets called with the runtime-context when a step returns an anomaly
+      - [opt] log-success   A function that gets called with the runtime-context after all steps succeeded
 
   - `steps`: Each item on the `steps` collection must be either a Tap, or a Processor
 
@@ -48,28 +49,30 @@
 
   - `initial-ctx` The context data that gets passed to the steps functions. Must be a map
 
-  - `on-complete'  Callback that gets called with the context if all the steps succeeded
+  - `on-sucess'  Callback that gets called with the context if all the steps succeeded
   - `on-anomaly`   Callback that gets called with an anomaly when any step returns one
   - `on-exception` Callback that gets called with an exception when any step triggers one
   "
-  ([config steps initial-ctx on-complete on-anomaly on-exception]
+  ([config steps initial-ctx on-sucess on-anomaly on-exception]
 
    (let [{:keys [anomaly?
-                 exception-tap
-                 anomaly-tap
+                 log-exception
+                 log-anomaly
+                 log-success
                  log-step-fn]} config]
 
      (-> (r/map->RuntimeContext
            {:anomaly?      (or anomaly? fonda.anomaly/anomaly?)
-            :exception-tap exception-tap
-            :anomaly-tap   anomaly-tap
+            :log-exception log-exception
+            :log-anomaly   log-anomaly
+            :log-success   log-success
             :ctx           (or initial-ctx nil)
-            :on-complete   on-complete
+            :on-success    on-sucess
             :on-anomaly    on-anomaly
             :on-exception  on-exception
             :queue         (st/steps->queue steps)
             :step-log      []
             :log-step-fn   (or log-step-fn e/default-log-step-fn)})
          (e/execute-steps)
-         (e/execute-taps)
+         (e/execute-loggers)
          (e/deliver-result)))))

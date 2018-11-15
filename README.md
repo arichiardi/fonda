@@ -15,27 +15,29 @@ It is possible to create custom anomalies by passing an anomaly? function in the
 ## Syntax
 
 ```clojure
-(execute config steps initial-ctx on-complete on-anomaly on-exception)
+(execute config steps initial-ctx on-success on-anomaly on-exception)
 ```
 - **config** A map with:
 
-      - [opt] anomaly?      A function that gets a map and determines if it is an anomaly
-      - [opt] exception-tap A function gets called with the runtime-context when there is an exception.
-      - [opt] anomaly-tap   A function that gets called with te runtime-context when a step returns an anomaly
+      - [opt] :anomaly?      A function that gets a map and determines if it is an anomaly
+      - [opt] :log-exception A function gets called with the runtime-context when there is an exception.
+      - [opt] :log-anomaly   A function that gets called with te runtime-context when a step returns an anomaly
+      - [opt] :log-success   A function that gets called after all the steps succeeded
+      
 - **steps**: Each item on the steps collection must be either a Tap, or a Processor
 
       Tap:
-       - tap:  A function that gets the context but doesn't augment it
-       - name: The name of the step
+       - :tap  A function that gets the context but doesn't augment it
+       - :name The name of the step
 
       Processor:
-       - processor: A function that gets the context returns a result that is assoced into the context on the given path
-       - path:      Path where to assoc the result of the processor
-       - name:      The name of the step
+       - :processor A function that gets the context returns a result that is assoced into the context on the given path
+       - :path      Path where to assoc the result of the processor
+       - :name      The name of the step
        
 - **initial-ctx** The context data that gets passed to the steps functions. Must be a map
                
-- **on-complete**  Callback that gets called with the context if all the steps succeeded
+- **on-success**  Callback that gets called with the context if all the steps succeeded
 - **on-anomaly**   Callback that gets called with an anomaly when any step returns one
 - **on-exception** Callback that gets called with an exception when any step triggers one
 
@@ -50,9 +52,9 @@ Taps only get a function, and if they succeed, the result is ignored.
 If any step returns an anomaly, or triggers an exception, the execution of the steps stops and the global taps 
 callbacks will be called.
 
-If any step returns an anomaly, the anomaly-tap will be called with the RuntimeContext, and then the on-anomaly callback
+If any step returns an anomaly, the log-anomaly will be called with the RuntimeContext, and then the on-anomaly callback
 
-If any step triggers an exception, the exception-tap will be called with the RuntimeContext, and then on-exception callback.
+If any step triggers an exception, the log-exception will be called with the RuntimeContext, and then on-exception callback.
 
 #### Processor steps
 
@@ -91,9 +93,11 @@ the context that is passed to each step. It also contains:
      :anomaly?      (fn [x] (:my-weird-error x))
 
      ;; [opt]
-     :exception-tap (fn [{:keys [ctx exception step-log]}])
+     :log-exception (fn [{:keys [ctx exception step-log]}])
 
-     :anomaly-tap   (fn [{:keys [ctx anomaly step-log]}])
+     :log-anomaly   (fn [{:keys [ctx anomaly step-log]}])
+     
+     :log-success   (fn [{:keys [ctx step-log]}])
 
      }
 
@@ -126,9 +130,12 @@ the context that is passed to each step. It also contains:
 
 ```clojure
 (fonda/execute
-  {:exception-tap     (fn [{:keys [error]}] (js/console.log "Exception happened:" error))
+  {:log-exception     (fn [{:keys [ctx error step-log]}] (js/console.log "Exception happened:" error))
    
-   :anomaly-tap       (fn [{:keys [anomaly]}] (js/console.log "An anomaly happened:" anomaly))}
+   :log-anomaly       (fn [{:keys [ctx anomaly step-log]}] (js/console.log "An anomaly happened:" anomaly))
+   
+   :log-success       (fn [{:keys [ctx step-log]}] (js/console.log "Operation successful!"))
+   }
   
   [
    ;; Processor that retrieves data remotely
@@ -147,7 +154,7 @@ the context that is passed to each step. It also contains:
 
   ;; On complete
   (fn [{:keys [remote-thing-processed]}] 
-   (call-on-complete-cb remote-thing-processed))
+   (call-on-success-cb remote-thing-processed))
    
   ;; On anomaly
   (fn [anomaly] 
