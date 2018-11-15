@@ -15,12 +15,12 @@
 
 
 
-(s/fdef set-processor-result
+(s/fdef assoc-processor-result
   :args (s/cat :runtime-ctx ::r/runtime-context
                :path ::st/path
                :res any?))
 
-(defn set-processor-result
+(defn assoc-processor-result
   [{:as runtime-ctx :keys [anomaly?]} path res]
   (if (anomaly? res)
     (assoc runtime-ctx :anomaly res)
@@ -41,7 +41,7 @@
     (let [res (if processor (processor ctx) (tap ctx))
           set-result-fn (cond
                           (not (nil? tap)) (partial set-tap-result runtime-ctx)
-                          (not (nil? processor)) (partial set-processor-result runtime-ctx path))
+                          (not (nil? processor)) (partial assoc-processor-result runtime-ctx path))
           set-result #(-> (set-result-fn %) (update :step-log log-step-fn step res))]
 
       (if (a/async? res)

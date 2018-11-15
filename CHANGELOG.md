@@ -9,4 +9,8 @@ and this project adheres to [Semantic Versioning](http://semver.org/spec/v2.0.0.
 
 ### Added
 
-
+- Config with :anomaly?, :log-exception, :log-anomaly, :log-success
+- Sequence of steps that can be asynchronous or synchronous
+- Steps can be Taps or Processors
+- After running the steps, the log functions are called
+- After calling the log functions, the callback functions are called

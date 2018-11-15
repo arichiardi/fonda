@@ -18,7 +18,7 @@
 (s/def ::log-step-fn fn?)
 
 (s/def ::runtime-context-async a/async?)
-(s/def ::runtime-context-map
+(s/def ::runtime-context-sync
   (s/keys :req-un [::anomaly?
                    ::log-exception
                    ::log-anomaly
@@ -34,7 +34,7 @@
                    ::anomaly]))
 
 (s/def ::runtime-context (s/or :async ::runtime-context-async
-                               :sync ::runtime-context-map))
+                               :sync ::runtime-context-sync))
 (defrecord RuntimeContext
   [
 
