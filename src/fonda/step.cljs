@@ -14,19 +14,19 @@
     ::step-common
     (s/keys :req-un [::tap])))
 
-;; Resolver step
+;; Processor step
 (s/def ::path vector?)
-(s/def ::resolver fn?)
-(s/def ::resolver-step
+(s/def ::processor fn?)
+(s/def ::processor-step
   (s/merge
     ::step-common
-    (s/keys :req-un [::resolver ::path])))
+    (s/keys :req-un [::processor ::path])))
 
 (s/def ::step
   (s/or :tap-step ::tap-step
-        :resolver-step ::resolver-step))
+        :processor-step ::processor-step))
 
-(defrecord TapStep
+(defrecord Tap
   [
    ;; A function that gets the context but doesn't augment it
    tap
@@ -34,22 +34,22 @@
    ;; The name for the step
    name])
 
-(defrecord ResolverStep
+(defrecord Processor
   [
    ;; A function that gets the context, the result is attached to the context on the given path
-   resolver
+   processor
 
    ;; Name for the step
    name
 
-   ;; Path were to attach the resolver result on the context
+   ;; Path were to attach the processor result on the context
    path])
 
 (defn steps->queue [steps]
   (->> steps
-       (mapv (fn [{:as m :keys [tap resolver]}]
+       (mapv (fn [{:as m :keys [tap processor]}]
                (cond
-                 tap (map->TapStep m)
-                 resolver (map->ResolverStep m)
+                 tap (map->Tap m)
+                 processor (map->Processor m)
                  :else (throw (ex-info "The step doesn't have tap neither resolve" m)))))
        (into #queue [])))

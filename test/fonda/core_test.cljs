@@ -13,60 +13,12 @@
    {fonda.anomaly/anomaly-key {:category category
                                :message  message}}))
 
-#_(execute
-
-    {
-
-     ;; [opt] By default, clojure anomaly
-     :anomaly?      (fn [x] (:my-weird-error x))
-
-     ;; [opt]
-     :exception-tap (fn [{:keys [ctx exception step-log]}])
-
-     :anomaly-tap   (fn [{:keys [ctx anomaly step-log]}])
-
-     ;; TODO: PLUGGABLE DEBUGGING
-     :debug         {}
-     }
-
-    [
-     ;; Blocking tap, it short-circuits if it throws an exception
-     {:tap (fn [ctx])}
-
-     {:path     [:something]
-      :name     "step-name"
-
-      ;; Resolver can return data, an anomaly, or throw an exception
-      :resolver (fn [])
-
-      :retry    {:path    [:path-to-retry-data]
-                 :name    "step-name"
-                 ;; Resolver can return the updated counter data, an anomaly, or throw an exception
-                 ;; If it returns data synchronously, it immediately repeats
-                 ;; If it returns data in a promise, the time until the promise gets resolved is the delay
-                 :delayer (fn [{:keys [ctx anomaly]}]
-                            {:updated "retry-data"})}}
-     ]
-
-    ;; Initial context
-    {}
-
-    ;; success cb
-    (fn [result])
-
-    ;; anomaly cb
-    (fn [anomaly])
-
-    ;; exception cb
-    (fn [exception])
-
-    )
-
 (deftest execute-empty-chain-test-1
   (testing "Passing empty configuration with empty steps should call on-complete with a nil value."
     (async done
-      (fonda/execute {} [] nil
-                     (fn [res] (is (nil? res)) (done))
+      (fonda/execute {} [] {}
+                     (fn [res]
+                       (is (= {} res)) (done))
                      (fn [_])
                      (fn [_])))))
 
@@ -79,17 +31,17 @@
                        (fn [_])
                        (fn [_]))))))
 
-(deftest one-successful-sync-resolver-test
-  (testing "Passing one synchronous resolver should call on-complete with the context augmented with the resolver result
-  on the resolver path."
+(deftest one-successful-sync-processor-test
+  (testing "Passing one synchronous processor should call on-complete with the context augmented with the processor result
+  on the processor path."
     (async done
-      (let [resolver-res 42
-            resolver-path [:resolver-path]
-            resolver {:path     resolver-path
-                      :name     "resolver name"
-                      :resolver (fn [_] resolver-res)}]
-        (fonda/execute {} [resolver] nil
-                       (fn [res] (is (= resolver-res (get-in res resolver-path))) (done))
+      (let [processor-res 42
+            processor-path [:processor-path]
+            processor {:path     processor-path
+                      :name     "processor name"
+                      :processor (fn [_] processor-res)}]
+        (fonda/execute {} [processor] {}
+                       (fn [res] (is (= processor-res (get-in res processor-path))) (done))
                        (fn [_])
                        (fn [_]))))))
 
@@ -117,148 +69,148 @@
                        (fn [_])
                        (fn [_]))))))
 
-(deftest one-successful-async-resolver-test
-  (testing "Passing one asynchronous resolver should call on-complete with the context augmented with the resolver result
-  on the resolver path."
+(deftest one-successful-async-processor-test
+  (testing "Passing one asynchronous processor should call on-complete with the context augmented with the processor result
+  on the processor path."
     (async done
-      (let [resolver-res 42
-            resolver-path [:resolver-path]
-            resolver {:path     resolver-path
-                      :name     "resolver name"
-                      :resolver (fn [_] (js/Promise.resolve resolver-res))}]
-        (fonda/execute {} [resolver] nil
-                       (fn [res] (is (= resolver-res (get-in res resolver-path))) (done))
+      (let [processor-res 42
+            processor-path [:processor-path]
+            processor {:path     processor-path
+                      :name     "processor name"
+                      :processor (fn [_] (js/Promise.resolve processor-res))}]
+        (fonda/execute {} [processor] {}
+                       (fn [res] (is (= processor-res (get-in res processor-path))) (done))
                        (fn [_])
                        (fn [_]))))))
 
-(deftest one-unsuccessful-sync-resolver-test
-  (testing "Passing one synchronous unsuccessful resolver should call on-anomaly with the anomaly"
+(deftest one-unsuccessful-sync-processor-test
+  (testing "Passing one synchronous unsuccessful processor should call on-anomaly with the anomaly"
     (async done
-      (let [resolver-res (anomaly :cognitect.anomalies/incorrect)
-            resolver {:path     [:resolver-path]
-                      :name     "resolver name"
-                      :resolver (fn [_] resolver-res)}]
-        (fonda/execute {} [resolver] nil
+      (let [processor-res (anomaly :cognitect.anomalies/incorrect)
+            processor {:path     [:processor-path]
+                      :name     "processor name"
+                      :processor (fn [_] processor-res)}]
+        (fonda/execute {} [processor] {}
                        (fn [_])
-                       (fn [anomaly] (is (= resolver-res anomaly)) (done))
+                       (fn [anomaly] (is (= processor-res anomaly)) (done))
                        (fn [_]))))))
 
 (deftest one-unsuccessful-sync-tap-test
   (testing "Passing one synchronous unsuccessful tap should call on-anomaly with the anomaly"
     (async done
       (let [tap-res (anomaly :cognitect.anomalies/incorrect)
-            tap {:path [:resolver-path]
-                 :name "resolver name"
+            tap {:path [:processor-path]
+                 :name "processor name"
                  :tap  (fn [_] tap-res)}]
-        (fonda/execute {} [tap] nil
+        (fonda/execute {} [tap] {}
                        (fn [_])
                        (fn [anomaly] (is (= tap-res anomaly)) (done))
                        (fn [_]))))))
 
-(deftest one-unsuccessful-sync-resolver-anomaly-tap-test
-  (testing "Passing one synchronous unsuccessful resolver should call the anomaly-tap with the runtime context"
+(deftest one-unsuccessful-sync-processor-anomaly-tap-test
+  (testing "Passing one synchronous unsuccessful processor should call the anomaly-tap with the runtime context"
     (async done
-      (let [resolver-res (anomaly :cognitect.anomalies/incorrect)
-            resolver {:path     [:resolver-path]
-                      :name     "resolver name"
-                      :resolver (fn [_] resolver-res)}
+      (let [processor-res (anomaly :cognitect.anomalies/incorrect)
+            processor {:path     [:processor-path]
+                      :name     "processor name"
+                      :processor (fn [_] processor-res)}
             anomaly-tap (fn [{:keys [anomaly]}]
-                          (is (= resolver-res anomaly)) (done))]
+                          (is (= processor-res anomaly)) (done))]
         (fonda/execute {:anomaly-tap anomaly-tap}
-                       [resolver] nil
+                       [processor] {}
                        (fn [_])
                        (fn [_])
                        (fn [_]))))))
 
-(deftest one-unsuccessful-async-resolver-test
-  (testing "Passing one asynchronous unsuccessful resolver should call on-anomaly with the anomaly"
+(deftest one-unsuccessful-async-processor-test
+  (testing "Passing one asynchronous unsuccessful processor should call on-anomaly with the anomaly"
     (async done
-      (let [resolver-res (anomaly :cognitect.anomalies/incorrect)
-            resolver {:path     [:resolver-path]
-                      :name     "resolver name"
-                      :resolver (fn [_] (js/Promise.resolve resolver-res))}]
-        (fonda/execute {} [resolver] nil
+      (let [processor-res (anomaly :cognitect.anomalies/incorrect)
+            processor {:path     [:processor-path]
+                      :name     "processor name"
+                      :processor (fn [_] (js/Promise.resolve processor-res))}]
+        (fonda/execute {} [processor] {}
                        (fn [_])
-                       (fn [anomaly] (is (= resolver-res anomaly)) (done))
+                       (fn [anomaly] (is (= processor-res anomaly)) (done))
                        (fn [_]))))))
 
-(deftest one-unsuccessful-async-resolver-anomaly-tap-test
-  (testing "Passing one asynchronous unsuccessful resolver should call the anomaly-tap with the runtime context"
+(deftest one-unsuccessful-async-processor-anomaly-tap-test
+  (testing "Passing one asynchronous unsuccessful processor should call the anomaly-tap with the runtime context"
     (async done
-      (let [resolver-res (anomaly :cognitect.anomalies/incorrect)
-            resolver {:path     [:resolver-path]
-                      :name     "resolver name"
-                      :resolver (fn [_] (js/Promise.resolve resolver-res))}
+      (let [processor-res (anomaly :cognitect.anomalies/incorrect)
+            processor {:path     [:processor-path]
+                      :name     "processor name"
+                      :processor (fn [_] (js/Promise.resolve processor-res))}
             anomaly-tap (fn [{:keys [anomaly]}]
-                          (is (= resolver-res anomaly)) (done))]
+                          (is (= processor-res anomaly)) (done))]
         (fonda/execute {:anomaly-tap anomaly-tap}
-                       [resolver] nil
+                       [processor] {}
                        (fn [_])
                        (fn [_])
                        (fn [_]))))))
 
-(deftest one-exceptional-sync-resolver-test
-  (testing "Passing one synchronous exceptional resolver should call on-exception with the exception"
+(deftest one-exceptional-sync-processor-test
+  (testing "Passing one synchronous exceptional processor should call on-exception with the exception"
     (async done
-      (let [resolver-res (js/Error "Bad error")
-            resolver {:path     [:resolver-path]
-                      :name     "resolver name"
-                      :resolver (fn [_] (throw resolver-res))}]
-        (fonda/execute {} [resolver] nil
+      (let [processor-res (js/Error "Bad error")
+            processor {:path     [:processor-path]
+                      :name     "processor name"
+                      :processor (fn [_] (throw processor-res))}]
+        (fonda/execute {} [processor] {}
                        (fn [_])
                        (fn [_])
-                       (fn [err] (is (= resolver-res err)) (done)))))))
+                       (fn [err] (is (= processor-res err)) (done)))))))
 
 (deftest one-exceptional-sync-tap-test
   (testing "Passing one synchronous exceptional tap should call on-exception with the exception"
     (async done
       (let [tap-res (js/Error "Bad error")
-            tap {:name "resolver name"
+            tap {:name "processor name"
                  :tap  (fn [_] (throw tap-res))}]
-        (fonda/execute {} [tap] nil
+        (fonda/execute {} [tap] {}
                        (fn [_])
                        (fn [_])
                        (fn [err] (is (= tap-res err)) (done)))))))
 
-(deftest one-exceptional-sync-resolver-error-tap-test
-  (testing "Passing one synchronous exceptional resolver should call the error-tap with the runtime context"
+(deftest one-exceptional-sync-processor-error-tap-test
+  (testing "Passing one synchronous exceptional processor should call the error-tap with the runtime context"
     (async done
-      (let [resolver-res (js/Error "Bad error")
-            resolver {:path     [:resolver-path]
-                      :name     "resolver name"
-                      :resolver (fn [_] (throw resolver-res))}
+      (let [processor-res (js/Error "Bad error")
+            processor {:path     [:processor-path]
+                      :name     "processor name"
+                      :processor (fn [_] (throw processor-res))}
             exception-tap (fn [{:keys [error]}]
-                            (is (= resolver-res error)) (done))]
+                            (is (= processor-res error)) (done))]
         (fonda/execute {:exception-tap exception-tap}
-                       [resolver] nil
+                       [processor] {}
                        (fn [_])
                        (fn [_])
                        (fn [_]))))))
 
 
-(deftest one-exceptional-async-resolver-test
-  (testing "Passing one asynchronous exceptional resolver should call on-anomaly with the anomaly"
+(deftest one-exceptional-async-processor-test
+  (testing "Passing one asynchronous exceptional processor should call on-anomaly with the anomaly"
     (async done
-      (let [resolver-res (js/Error "Bad error")
-            resolver {:path     [:resolver-path]
-                      :name     "resolver name"
-                      :resolver (fn [_] (js/Promise.reject resolver-res))}]
-        (fonda/execute {} [resolver] nil
+      (let [processor-res (js/Error "Bad error")
+            processor {:path     [:processor-path]
+                      :name     "processor name"
+                      :processor (fn [_] (js/Promise.reject processor-res))}]
+        (fonda/execute {} [processor] {}
                        (fn [_])
                        (fn [_])
-                       (fn [err] (is (= resolver-res err)) (done)))))))
+                       (fn [err] (is (= processor-res err)) (done)))))))
 
-(deftest one-exceptional-async-resolver-error-tap-test
-  (testing "Passing one asynchronous exceptional resolver should call the error-tap with the runtime context"
+(deftest one-exceptional-async-processor-error-tap-test
+  (testing "Passing one asynchronous exceptional processor should call the error-tap with the runtime context"
     (async done
-      (let [resolver-res (js/Error "Bad error")
-            resolver {:path     [:resolver-path]
-                      :name     "resolver name"
-                      :resolver (fn [_] (js/Promise.reject resolver-res))}
+      (let [processor-res (js/Error "Bad error")
+            processor {:path     [:processor-path]
+                      :name     "processor name"
+                      :processor (fn [_] (js/Promise.reject processor-res))}
             exception-tap (fn [{:keys [error]}]
-                            (is (= resolver-res error)) (done))]
+                            (is (= processor-res error)) (done))]
         (fonda/execute {:exception-tap exception-tap}
-                       [resolver] nil
+                       [processor] {}
                        (fn [_])
                        (fn [_])
                        (fn [_]))))))
@@ -270,7 +222,7 @@
                  :tap  (fn [{:keys [step-log]}]
                          (is (= step-log []) (done)))}]
         (fonda/execute {}
-                       [tap] nil
+                       [tap] {}
                        (fn [_])
                        (fn [_])
                        (fn [_]))))))
@@ -281,8 +233,8 @@
       (let [step1-val 1
             step2-fn inc]
         (fonda/execute {}
-                       [{:path [:step1] :name "step1" :resolver (fn [_] step1-val)}
-                        {:path [:step2] :name "step2" :resolver (fn [{:keys [step1]}] (step2-fn step1))}] nil
+                       [{:path [:step1] :name "step1" :processor (fn [_] step1-val)}
+                        {:path [:step2] :name "step2" :processor (fn [{:keys [step1]}] (step2-fn step1))}] nil
                        (fn [res] (is (= res {:step1 step1-val :step2 (step2-fn step1-val)})) (done))
                        (fn [_])
                        (fn [_]))))))
@@ -295,11 +247,11 @@
         (fonda/execute {}
                        [{:path     [:step1]
                          :name     "step1"
-                         :resolver (fn [_] (js/Promise.resolve step1-val))}
+                         :processor (fn [_] (js/Promise.resolve step1-val))}
                         {:path     [:step2]
                          :name     "step2"
-                         :resolver (fn [{:keys [step1]}]
-                                     (js/Promise.resolve (step2-fn step1)))}] nil
+                         :processor (fn [{:keys [step1]}]
+                                     (js/Promise.resolve (step2-fn step1)))}] {}
                        (fn [res] (is (= res {:step1 step1-val :step2 (step2-fn step1-val)})) (done))
                        (fn [_])
                        (fn [_]))))))
@@ -313,15 +265,15 @@
         (fonda/execute {}
                        [{:path     [:step1]
                          :name     "step1"
-                         :resolver (fn [_] (js/Promise.resolve step1-val))}
+                         :processor (fn [_] (js/Promise.resolve step1-val))}
                         {:path     [:step2]
                          :name     "step2"
-                         :resolver (fn [{:keys [step1]}]
+                         :processor (fn [{:keys [step1]}]
                                      (step2-fn step1))}
                         {:path     [:step3]
                          :name     "step3"
-                         :resolver (fn [{:keys [step2]}]
-                                     (step3-fn step2))}] nil
+                         :processor (fn [{:keys [step2]}]
+                                     (step3-fn step2))}] {}
                        (fn [res] (is (= res {:step1 step1-val
                                              :step2 (step2-fn step1-val)
                                              :step3 (-> step1-val (step2-fn) (step3-fn))})) (done))
@@ -335,17 +287,17 @@
         (fonda/execute {}
                        [{:path     [:step1]
                          :name     "step1"
-                         :resolver (fn [_]
+                         :processor (fn [_]
                                      (js/Promise.resolve 1))}
 
                         {:path     [:step2]
                          :name     "step2"
-                         :resolver (fn [_] unsuccessful-res)}
+                         :processor (fn [_] unsuccessful-res)}
 
                         {:path     [:step3]
                          :name     "step3"
-                         :resolver (fn [_] 1)}]
-                       nil
+                         :processor (fn [_] 1)}]
+                       {}
                        (fn [_])
                        (fn [anomaly] (is (= unsuccessful-res anomaly)) (done))
                        (fn [_]))))))
@@ -359,17 +311,17 @@
         (fonda/execute {}
                        [{:path     [:step1]
                          :name     "step1"
-                         :resolver (fn [_]
+                         :processor (fn [_]
                                      (js/Promise.resolve (swap! step1-counter inc)))}
 
                         {:path     [:step2]
                          :name     "step2"
-                         :resolver (fn [_] unsuccessful-res)}
+                         :processor (fn [_] unsuccessful-res)}
 
                         {:path     [:step3]
                          :name     "step3"
-                         :resolver (fn [_] (swap! step3-counter inc))}]
-                       nil
+                         :processor (fn [_] (swap! step3-counter inc))}]
+                       {}
                        (fn [_])
                        (fn [anomaly] (is (and (= 1 @step1-counter)
                                               (= 0 @step3-counter))) (done))
@@ -382,17 +334,17 @@
         (fonda/execute {}
                        [{:path     [:step1]
                          :name     "step1"
-                         :resolver (fn [_]
+                         :processor (fn [_]
                                      (js/Promise.resolve 1))}
 
                         {:path     [:step2]
                          :name     "step2"
-                         :resolver (fn [_] (throw exception))}
+                         :processor (fn [_] (throw exception))}
 
                         {:path     [:step3]
                          :name     "step3"
-                         :resolver (fn [_] 1)}]
-                       nil
+                         :processor (fn [_] 1)}]
+                       {}
                        (fn [_])
                        (fn [_])
                        (fn [err] (is (= exception err)) (done)))))))
@@ -406,17 +358,17 @@
         (fonda/execute {}
                        [{:path     [:step1]
                          :name     "step1"
-                         :resolver (fn [_]
+                         :processor (fn [_]
                                      (js/Promise.resolve (swap! step1-counter inc)))}
 
                         {:path     [:step2]
                          :name     "step2"
-                         :resolver (fn [_] (js/Promise.reject exception))}
+                         :processor (fn [_] (js/Promise.reject exception))}
 
                         {:path     [:step3]
                          :name     "step1"
-                         :resolver (fn [_] (swap! step3-counter inc))}]
-                       nil
+                         :processor (fn [_] (swap! step3-counter inc))}]
+                       {}
                        (fn [_])
                        (fn [_])
                        (fn [err] (is (and (= 1 @step1-counter)
@@ -431,7 +383,7 @@
         (fonda/execute {}
                        [{:path     [:step1]
                          :name     "step1"
-                         :resolver (fn [_]
+                         :processor (fn [_]
                                      (js/Promise.resolve (swap! step1-counter inc)))}
 
                         {:name "step2"
@@ -439,8 +391,8 @@
 
                         {:path     [:step3]
                          :name     "step1"
-                         :resolver (fn [_] (swap! step3-counter inc))}]
-                       nil
+                         :processor (fn [_] (swap! step3-counter inc))}]
+                       {}
                        (fn [_])
                        (fn [_])
                        (fn [err] (is (and (= 1 @step1-counter)
@@ -452,14 +404,14 @@
       (let [step1-res 1
             step1 {:path     [:step1]
                    :name     "step1"
-                   :resolver (fn [_] step1-res)}
+                   :processor (fn [_] step1-res)}
             tap {:name "tap name"
                  :tap  (fn [{:keys [step-log]}]
                          (is (= step-log ["step1"])) (done))}]
         (fonda/execute {}
                        [step1
                         tap]
-                       nil
+                       {}
                        (fn [_])
                        (fn [_])
                        (fn [_]))))))

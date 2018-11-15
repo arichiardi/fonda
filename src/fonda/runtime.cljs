@@ -5,7 +5,7 @@
 (s/def ::anomaly? fn?)
 (s/def ::exception-tap (s/nilable fn?))
 (s/def ::anomaly-tap (s/nilable fn?))
-(s/def ::ctx (s/nilable map?))
+(s/def ::ctx map?)
 (s/def ::error (s/nilable #(instance? js/Error %)))
 (s/def ::anomaly (s/nilable any?))
 (s/def ::on-complete fn?)

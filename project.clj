@@ -1,4 +1,4 @@
-(defproject fonda "0.0.1"
+(defproject elasticpath/fonda "0.0.1"
   :url "https://github.com/elasticpath/fonda"
   :source-paths ["src"]
   :test-paths ["test"]

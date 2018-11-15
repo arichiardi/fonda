@@ -14,12 +14,12 @@
 
 
 
-(s/fdef set-resolver-result
+(s/fdef set-processor-result
   :args (s/cat :runtime-ctx ::r/runtime-context
                :path ::st/path
                :res any?))
 
-(defn set-resolver-result
+(defn set-processor-result
   [{:as runtime-ctx :keys [anomaly?]} path res]
   (if (anomaly? res)
     (assoc runtime-ctx :anomaly res)
@@ -32,16 +32,16 @@
                :step ::st/step))
 
 (defn- try-step
-  "Tries running the given step (a tap step, or a resolver step).
+  "Tries running the given step (a tap step, or a processor step).
   If an exception gets triggerd, an error is added on the context.
   If an anomaly is returned, an anomaly is added to the context"
   [{:as runtime-ctx :keys [ctx log-step-fn]}
-                 {:as step :keys [path name resolver tap]}]
+                 {:as step :keys [path name processor tap]}]
   (try
-    (let [res (if resolver (resolver ctx) (tap runtime-ctx))
+    (let [res (if processor (processor ctx) (tap runtime-ctx))
           set-result-fn (cond
                           (not (nil? tap)) (partial set-tap-result runtime-ctx)
-                          (not (nil? resolver)) (partial set-resolver-result runtime-ctx path))
+                          (not (nil? processor)) (partial set-processor-result runtime-ctx path))
           set-result #(-> (set-result-fn %) (update :step-log log-step-fn step res))]
 
       (if (a/async? res)

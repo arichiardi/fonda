@@ -1,10 +1,10 @@
 {:paths   ["src"]
- :deps    {com.bhauman/spell-spec {:mvn/version "0.1.1"}}
+ :deps    {}
  :aliases {:test {:extra-paths ["test"]
                   :extra-deps  {}}
            :dev  {:extra-paths ["dev"]
                   :extra-deps  {org.clojure/clojure       {:mvn/version "1.10.0-beta5"}
-                                org.clojure/clojurescript {:mvn/version "1.10.339"}
+                                org.clojure/clojurescript {:mvn/version "1.10.439"}
                                 expound                   {:mvn/version "0.7.1"}
                                 org.clojure/test.check    {:mvn/version "0.10.0-alpha3" :exclusions [org.clojure/clojure]}
                                 orchestra                 {:mvn/version "2018.11.07-1"}}}}}
