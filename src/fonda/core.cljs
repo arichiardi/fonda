@@ -34,8 +34,6 @@
       - [opt] anomaly?      A function that gets a map and determines if it is an anomaly
       - [opt] exception-tap A function gets called with the runtime-context when there is an exception
       - [opt] anomaly-tap   A function that gets called with te runtime-context when a step returns an anomaly
-      - [opt] log-step-fn   A function that defines how each step adds information to the log
-
 
   - `steps`: Each item on the `steps` collection must be either a Tap, or a Processor
 

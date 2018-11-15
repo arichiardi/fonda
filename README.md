@@ -22,8 +22,6 @@ It is possible to create custom anomalies by passing an anomaly? function in the
       - [opt] anomaly?      A function that gets a map and determines if it is an anomaly
       - [opt] exception-tap A function gets called with the runtime-context when there is an exception.
       - [opt] anomaly-tap   A function that gets called with te runtime-context when a step returns an anomaly
-      - [opt] log-step-fn   A function that defines how each step adds information to the log
-
 - **steps**: Each item on the steps collection must be either a Tap, or a Processor
 
       Tap:
@@ -80,8 +78,6 @@ Global taps are called with the runtime context. The runtime context is a map th
 the context that is passed to each step. It also contains:
 
 - **step-log** A collection of step logs. By default only step names are logged.
-               A **log-step-fn** configuration attribute can be passed in order to customize the logging.
- 
 
 
 ## Examples
