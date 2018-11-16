@@ -5,7 +5,7 @@
 version: 2
 defaults: &defaults
   docker:
-      - image: circleci/lein-2.8.1-node
+      - image: circleci/clojure:lein-2.8.1-node
   working_directory: ~/fonda
   shell: /bin/bash --login -o pipefail
 
