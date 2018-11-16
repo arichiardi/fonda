@@ -2,11 +2,10 @@
   "name": "@ep-npm/fonda",
   "version": "0.0.1",
   "description": "Utility for transforming Terraform variables to environment variables.",
-  "license": "Apache-2.0",
-  "author": "Elastic Path Software",
   "license": "Unlicense",
+  "author": "Elastic Path Software",
   "contributors": [
-    "David Cerezo Inigo <david.cerezoinigo@elasticpath.com>",
+    "David Cerezo Iñigo <david.cerezoinigo@elasticpath.com>",
     "Andrea Richiardi <andrea.richiardi@elasticpath.com>",
     "Sebastian Schulz <sebastian.schulz@elasticpath.com>"
   ],
@@ -37,6 +36,5 @@
   "devDependencies": {
     "shadow-cljs": "2.7.3"
   },
-  "dependencies": {
-  }
+  "dependencies": {}
 }
