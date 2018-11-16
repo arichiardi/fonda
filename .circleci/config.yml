@@ -5,7 +5,7 @@
 version: 2
 defaults: &defaults
   docker:
-      - image: circleci/clojure:tools-deps-node
+      - image: circleci/lein-2.8.1-node
   working_directory: ~/fonda
   shell: /bin/bash --login -o pipefail
 
@@ -20,7 +20,7 @@ run-install-yarn: &run-install-yarn
 
 run-install-clojure: &run-install-clojure
   name: Install clojure
-  commad: |
+  command: |
     if [[ ! $(which clojure) ]]; then
     TEMP_DIR=/tmp
     curl -fsSLoO https://download.clojure.org/install/linux-install-1.9.0.397.sh > $TEMP_DIR/clojure-linux-install.sh
@@ -59,7 +59,7 @@ jobs:
           <<: *run-install-clojure
       - run:
           command: lein deploy clojars
-          name: deploy-to-clojars
+          name: deploy
 
       - save-cache:
           <<: *save-cache
