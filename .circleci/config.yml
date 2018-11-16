@@ -18,7 +18,7 @@ run-install-yarn: &run-install-yarn
     # Adding to $BASH_ENV
     echo 'export PATH="$HOME/.yarn/bin:$HOME/.config/yarn/global/node_modules/.bin:$PATH"' >> $BASH_ENV
 
-run-install-clojure: &install-clojure
+run-install-clojure: &run-install-clojure
   name: Install clojure
   commad: |
     curl -fsSLoO https://download.clojure.org/install/linux-install-1.9.0.397.sh > $TEMP_DIR/clojure-linux-install.sh
