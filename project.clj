@@ -1,4 +1,20 @@
-(defproject com.elasticpath/fonda "0.0.1"
+(defn throw-if-non-zero
+  [process]
+  (let [exit-code (.waitFor process)]
+    (if-not (= 0 exit-code)
+      (throw (ex-info (str "Process returned non-zero exit code (" exit-code ")")
+                      {:exit-code exit-code}))
+      process)))
+
+(def +version+
+  (-> (ProcessBuilder. ["yarn" "version" "--version"])
+      (.start)
+      (throw-if-non-zero)
+      (.getInputStream)
+      slurp
+      (clojure.string/trim-newline)))
+
+(defproject com.elasticpath/fonda +version+
   :url "https://github.com/elasticpath/fonda"
   :source-paths ["src"]
   :test-paths ["test"]
