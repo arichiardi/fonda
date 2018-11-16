@@ -251,7 +251,7 @@
                        anomaly-cb-throw
                        exception-cb-throw)))))
 
-(deftest multiple-successful-asynchronous-steps-test
+(deftest multiple-successful-asynchronous-steps-augmented-context-on-success-test
   (testing "Passing multiple successful asynchronous steps should call the on-success callback with the augmented context"
     (async done
       (let [step1-val 1
@@ -269,7 +269,7 @@
                        anomaly-cb-throw
                        exception-cb-throw)))))
 
-(deftest multiple-successful-asynchronous-steps-test
+(deftest multiple-successful-asynchronous-steps-log-success-test
   (testing "Passing multiple successful asynchronous steps should call log-success with all the steps on the step-log"
     (async done
       (let [step1-val 1
