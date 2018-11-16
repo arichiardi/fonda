@@ -1,0 +1,97 @@
+# Clojure CircleCI 2.0 configuration file
+#
+# Check https://circleci.com/docs/2.0/language-clojure/ for more details
+#
+version: 2
+defaults: &defaults
+  docker:
+      - image: circleci/clojure:lein-2.8.1-node
+  working_directory: ~/fonda
+  shell: /bin/bash --login -o pipefail
+
+run-install-yarn: &run-install-yarn
+  name: Install yarn
+  command: |
+    if [[ ! -d "$HOME/.yarn" ]]; then
+    curl -o- -L https://yarnpkg.com/install.sh | bash;
+    fi
+    # Adding to $BASH_ENV
+    echo 'export PATH="$HOME/.yarn/bin:$HOME/.config/yarn/global/node_modules/.bin:$PATH"' >> $BASH_ENV
+
+run-install-clojure: &run-install-clojure
+  name: Install clojure
+  command: |
+    if [[ ! $(which clojure) ]]; then
+    TEMP_DIR=/tmp
+    curl -o- https://download.clojure.org/install/linux-install-1.9.0.397.sh > $TEMP_DIR/clojure-linux-install.sh
+    chmod +x $TEMP_DIR/clojure-linux-install.sh
+    sudo $TEMP_DIR/clojure-linux-install.sh
+    fi
+
+restore-cache: &restore-cache
+  keys:
+    - cache-eib7eeDu-{{ .Branch }}-{{ checksum "deps.edn" }}-{{ checksum "yarn.lock" }}
+    # fallback to using the latest cache if no exact match is found
+    - cache-eib7eeDu-{{ .Branch }}
+
+save-cache: &save-cache
+  paths:
+    - ~/.m2
+    - ~/.yarn
+    - ~/.cache/yarn
+    - ~/.config/yarn
+    - ./node_modules
+    - ./cpcache
+  key: cache-eib7eeDu-{{ .Branch }}-{{ checksum "deps.edn" }}-{{ checksum "yarn.lock" }}
+
+
+
+jobs:
+  publish:
+    <<: *defaults
+    steps:
+      - checkout
+      - restore_cache:
+          <<: *restore-cache
+      - run:
+          <<: *run-install-yarn
+      - run:
+          <<: *run-install-clojure
+      - run:
+          command: lein deploy clojars
+          name: deploy
+
+      - save-cache:
+          <<: *save-cache
+
+  test:
+    <<: *defaults
+    steps:
+      - checkout
+      - restore_cache:
+          <<: *restore-cache
+      - run:
+          <<: *run-install-yarn
+      - run:
+          <<: *run-install-clojure
+      - run: yarn install --ignore-scripts
+      - run: yarn test
+      - save-cache:
+          <<: *save-cache
+
+workflows:
+  version: 2
+  test-and-publish:
+    jobs:
+      - test:
+          filters:  # required since `deploy` has tag filters AND requires `build`
+            tags:
+              only: /.*/
+      - publish:
+          requires:
+            - test
+          filters:
+            tags:
+              only: /^v.*/
+            branches:
+              ignore: /.*/
