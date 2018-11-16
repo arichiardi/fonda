@@ -95,29 +95,35 @@ the context that is passed to each step. It also contains:
 
 ```clojure
 (fonda/execute
-  {:log-exception     (fn [{:keys [ctx error step-log]}] (js/console.log "Exception happened:" error))
+  {:log-exception   (fn [{:keys [ctx error step-log]}] 
+                      (js/console.log "Exception happened:" error))
    
-   :log-anomaly       (fn [{:keys [ctx anomaly step-log]}] (js/console.log "An anomaly happened:" anomaly))
+   :log-anomaly     (fn [{:keys [ctx anomaly step-log]}] 
+                      (js/console.log "An anomaly happened:" anomaly))
    
-   :log-success       (fn [{:keys [ctx step-log]}] (js/console.log "Operation successful!"))
+   :log-success     (fn [{:keys [ctx step-log]}] 
+                      (js/console.log "Operation successful!"))
    }
   
   [
    ;; Processor that retrieves data remotely
-   {:processor        (fn [ctx] (ajax/get "http://remote-thing-url"))
+   {:processor      (fn [ctx] 
+                      (ajax/get "http://remote-thing-url"))
     :name             "get-remote-thing"
     :path             [:remote-thing] }
    
    ;; Processor that processes the data
-   {:processor        (fn [{:keys [remote-thing]}] (process-remote-thing remote-thing))
+   {:processor      (fn [{:keys [remote-thing]}] 
+                       (process-remote-thing remote-thing))
     :name             "process-thing"
     :path             [:remote-thing-processed]}
    
    ;; Tap that logs things
-   {:tap              (fn [{:keys [remote-thing]}] (js/console.log "remote thing:"))}
+   {:tap            (fn [{:keys [remote-thing]}] 
+                      (js/console.log "remote thing:"))}
    ]
 
-  ;; On complete
+  ;; On success
   (fn [{:keys [remote-thing-processed]}] 
    (call-on-success-cb remote-thing-processed))
    
