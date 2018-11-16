@@ -21,9 +21,12 @@ run-install-yarn: &run-install-yarn
 run-install-clojure: &run-install-clojure
   name: Install clojure
   commad: |
+    if [[ ! $(which clojure) ]]; then
+    TEMP_DIR=/tmp
     curl -fsSLoO https://download.clojure.org/install/linux-install-1.9.0.397.sh > $TEMP_DIR/clojure-linux-install.sh
     chmod +x $TEMP_DIR/clojure-linux-install.sh
-    ./$TEMP_DIR/clojure-linux-install.sh --prefix=.local
+    ./$TEMP_DIR/clojure-linux-install.sh
+    fi
 
 restore-cache: &restore-cache
   keys:
