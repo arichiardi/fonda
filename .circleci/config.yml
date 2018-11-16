@@ -59,8 +59,7 @@ jobs:
           <<: *run-install-clojure
       - run:
           command: lein deploy clojars
-          environment:
-
+          name: deploy-to-clojars
 
       - save-cache:
           <<: *save-cache
