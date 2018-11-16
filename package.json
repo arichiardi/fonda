@@ -1,5 +1,6 @@
 {
   "name": "@ep-npm/fonda",
+  "version": "0.0.1",
   "description": "Utility for transforming Terraform variables to environment variables.",
   "license": "Apache-2.0",
   "author": "Elastic Path Software",
