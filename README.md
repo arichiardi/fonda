@@ -136,3 +136,10 @@ the context that is passed to each step. It also contains:
    (call-on-error-cb error)))
 
 ```
+
+## Trivia
+ 
+The name fonda got inspired by Jane Fonda's step fintess programms
+![](https://img.buzzfeed.com/buzzfeed-static/static/enhanced/webdr03/2013/8/15/10/anigif_enhanced-buzz-31474-1376578012-1.gif?downsize=700:*&output-format=auto&output-quality=auto)
+
+As the fitness programm fonda consist of well curated steps.
