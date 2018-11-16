@@ -7,7 +7,7 @@
       process)))
 
 (def +version+
-  (-> (ProcessBuilder. ["yarn" "version" "--version"])
+  (-> (ProcessBuilder. ["scripts/get-version.sh"])
       (.start)
       (throw-if-non-zero)
       (.getInputStream)
