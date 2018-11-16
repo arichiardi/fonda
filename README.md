@@ -2,7 +2,7 @@
 
 # Fonda
 
-An async pipeline approach to functional core - imperative shell.
+An async pipeline approach to functional core - imperative shell from by Gary Bernhardt's [Boundaries talk.](https://www.destroyallsoftware.com/talks/boundaries)
 
 ## Asynchronous pipeline of steps
 
@@ -12,10 +12,9 @@ After the steps are run, the optional loggers are called.
 
 After the loggers are called, the callbacks will be called.
 
-Fonda distinguishes between exceptions and [anomalies](https://github.com/cognitect-labs/anomalies/blob/master/src/cognitect/anomalies.cljc) errors
+Fonda distinguishes between exceptions and [anomalies](https://github.com/cognitect-labs/anomalies/blob/master/src/cognitect/anomalies.cljc) as errors.
 
-Anomalies are just data that define a recoverable "business" error, as opposed to JavaScript js/Error or Java Exception, 
-which never meant to be caught and are usually caused by programming bugs.
+Anomalies are just data that define a recoverable "business" error, as opposed to a thrown JavaScript js/Error, Promise error or Java Exception, which never meant to be caught and are usually caused by programming bugs.
  
 By default, Fonda wraps the anomalies in a map with the key `:cognitect.anomalies/anomaly`.
 
@@ -28,38 +27,40 @@ It is possible to redefine what an anomaly is by passing the predicate anomaly? 
 ```
 - **config** A map with:
 
-      - [opt] :anomaly?      A function that gets a map and determines if it is an anomaly
-      - [opt] :log-exception A function that gets called with the [runtime](#runtimeContext) when there is an exception.
-      - [opt] :log-anomaly   A function that gets called with te [anomalies](https://github.com/cognitect-labs/anomalies/blob/master/src/cognitect/anomalies.cljc)runtime context when a step returns an anomaly
-      - [opt] :log-success   A function that gets called after all the steps succeeded
+| Key | Optional? | Notes |
+|---|---|---|
+| `:anomaly?` | Yes | A function that gets a map and determines if it is an anomaly |
+| `:log-exception` | Yes | A function that gets called with the [runtime](#runtimeContext) when there is an exception |
+| `:log-anomaly` | Yes | A function that gets called with the [anomalies](https://github.com/cognitect-labs/anomalies/blob/master/src/cognitect/anomalies.cljc) runtime context when a step returns an anomaly |
+| `:log-success` | Yes | A function that gets called after all the steps succeed |
       
-- **steps**: Each item on the steps collection must be either a Tap, or a Processor
+- **steps**: Each item on the steps collection must be either a Tap or a Processor
 
-      Tap:
-       - :tap  A function that gets the context but doesn't augment it
-       - :name The name of the step
+###Tap:
 
-      Processor:
-       - :processor A function that gets the context returns a result that is assoced into the context on the given path
-       - :path      Path where to assoc the result of the processor
-       - :name      The name of the step
+| Key | Optional? | Notes |
+|---|---|---|
+| `:tap` | No | A function that gets the context but doesn't augment it |
+| `:name` | No | The name of the step |
+
+###Processor:
+
+| Key | Optional? | Notes |
+|---|---|---|
+| `:processor` | No | A function that gets the context returns a result that is [assoc](https://clojuredocs.org/clojure.core/assoc)ed into the context on the given path|
+| `:path` | No | Path where to assoc the result of the processor |
+| `:name` | No | The name of the step |
+ 
        
-- **initial-ctx** The context data that gets passed to the steps functions. Must be a map
+- **initial-ctx** The context data that gets passed to the steps functions. Must be a map.
                
-- **on-success**  Callback that gets called with the context if all steps succeeded
-- **on-anomaly**   Callback that gets called with an anomaly when any step returns one
-- **on-exception** Callback that gets called with an exception when any step triggers one
+- **on-success**  Callback that gets called with the context if all steps succeeded.
+- **on-anomaly**   Callback that gets called with an anomaly when any step returns one.
+- **on-exception** Callback that gets called with an exception when any step triggers one.
 
-### Steps
+### Error and Anomaly Handling
 
-- There are two types of steps: **taps** and **processors**.
-
-- Processors get a path and a function. The data returned will be placed in the context on that path.
-
-- Taps only get a function, and if they succeed, the result is ignored.
-
-- If any step returns an anomaly, or triggers an exception, the execution of the steps stops and the global taps 
-  callbacks will be called.
+- If any step returns an anomaly, or triggers an exception, the execution of the steps stops and the global taps will be called.
 
 - If any step returns an anomaly, the log-anomaly will be called with the RuntimeContext, and then the on-anomaly callback
 
@@ -139,7 +140,7 @@ the context that is passed to each step. It also contains:
 
 ## Trivia
  
-The name fonda got inspired by Jane Fonda's step fintess programms
+The name fonda got inspired by Jane Fonda's step fitness programs.
 ![](https://img.buzzfeed.com/buzzfeed-static/static/enhanced/webdr03/2013/8/15/10/anigif_enhanced-buzz-31474-1376578012-1.gif?downsize=700:*&output-format=auto&output-quality=auto)
 
-As the fitness programm fonda consist of well curated steps.
+As with the fitness program, fonda consist of well-curated steps.
