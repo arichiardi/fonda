@@ -7,15 +7,12 @@
 (orchestra/instrument)
 
 (defn success-cb-throw [res]
-  (println "not expected success!")
   (throw (js/Error (str "not excepted success callback called with res:" res))))
 
 (defn exception-cb-throw [err]
-  (println "not expected exception!")
   (throw err))
 
 (defn anomaly-cb-throw [anomaly]
-  (println "not expected anomaly!")
   (throw (js/Error (str "not expected anomaly callback called with anomaly:" anomaly))))
 
 (defn anomaly
