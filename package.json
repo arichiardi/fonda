@@ -30,7 +30,7 @@
     "repl": "yarn shadow-cljs watch lib",
     "watch": "yarn shadow-cljs watch lib",
     "build": "yarn shadow-cljs release lib",
-    "test": "yarn shadow-cljs release test && node .cljs/test.js",
+    "test": "yarn shadow-cljs release test && node dist/test.js",
     "test:watch": "yarn shadow-cljs watch test"
   },
   "devDependencies": {
