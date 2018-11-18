@@ -18,7 +18,7 @@ Before you submit your Pull Request (PR) consider the following guidelines:
 * Compile:
 
   ```shell
-  yarn shadow-cljs release script
+  yarn shadow-cljs release lib
   ```
 
 * Add your PR changes to [CHANGELOG.md](./CHANGELOG.md), including the relevant
@@ -59,5 +59,5 @@ Check these two files for more:
 
  * [Shadow-cljs Editor Integration](https://shadow-cljs.github.io/docs/UsersGuide.html#_editor_integration)
  * [ClojureScript IntelliJ IDEA and shadow-cljs](https://andrearichiardi.com/blog/posts/clojurescript-cursive-shadow-setup.html)
- 
- 
+
+

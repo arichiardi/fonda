@@ -6,54 +6,62 @@ An async pipeline approach to functional core - imperative shell from by Gary Be
 
 ## Asynchronous pipeline of steps
 
-Fonda sequentially executes an (a)synchronous series of steps, one after the other, augmenting a context map.
+Fonda sequentially executes a series of [steps](#trivia), one after the other, augmenting a context map. The steps can be synchronous or asyncronous. After the steps are run, the termination callbacks will be executed.
 
-After the steps are run, the optional loggers are called.
+Fonda distinguishes between exceptions and anomalies.
 
-After the loggers are called, the callbacks will be called.
+- Anomaly
 
-Fonda distinguishes between exceptions and [anomalies](https://github.com/cognitect-labs/anomalies/blob/master/src/cognitect/anomalies.cljc) as errors.
+  > Deviation or departure from the normal or common order, form, or rule.
 
-Anomalies are just data that define a recoverable "business" error, as opposed to a thrown JavaScript js/Error, Promise error or Java Exception, which never meant to be caught and are usually caused by programming bugs.
- 
-By default, Fonda wraps the anomalies in a map with the key `:cognitect.anomalies/anomaly`.
+Anomalies are just data that define a recoverable "business" error. There is a stark contrast between anomalies and JavaScript `js/Error`s, Promise rejections, Java `Exception`s. The latter are never meant to be caught and are usually caused by programming bugs.
 
-It is possible to redefine what an anomaly is by passing the predicate anomaly? to the configuration.
+Anomalies are first class citizens and by default they are maps containing the [`:cognitect.anomalies/anomaly`](https://github.com/cognitect-labs/anomalies) key.
 
-## Syntax
+It is possible to redefine what an anomaly is by passing a predicate, `anomaly?` to fonda.
+
+## Usage
 
 ```clojure
-(execute config steps initial-ctx on-success on-anomaly on-exception)
+(ns my-namespace.core
+  (:require [fonda.core :as fonda]))
+
+(fonda/execute config steps initial-ctx on-success on-anomaly on-exception)
 ```
+
+The parameter order makes it easy to partially apply `execute` for leaner call sites.
+
+## Parameters
+
 - **config** A map with:
 
 | Key | Optional? | Notes |
 |---|---|---|
 | `:anomaly?` | Yes | A function that gets a map and determines if it is an anomaly |
-| `:log-exception` | Yes | A function that gets called with the [runtime](#runtimeContext) when there is an exception |
-| `:log-anomaly` | Yes | A function that gets called with the [anomalies](https://github.com/cognitect-labs/anomalies/blob/master/src/cognitect/anomalies.cljc) runtime context when a step returns an anomaly |
+| `:log-exception` | Yes | A function that gets called with the [runtime context](#runtimeContext) when there is an exception |
+| `:log-anomaly` | Yes | A function that gets called with the [runtime context](#runtimeContext) when a step returns an anomaly |
 | `:log-success` | Yes | A function that gets called after all the steps succeed |
-      
+
 - **steps**: Each item on the steps collection must be either a Tap or a Processor
 
-###Tap:
+  - tap
 
-| Key | Optional? | Notes |
-|---|---|---|
-| `:tap` | No | A function that gets the context but doesn't augment it |
-| `:name` | No | The name of the step |
+    | Key | Optional? | Notes |
+    |---|---|---|
+    | `:tap` | No | A function that gets the context but doesn't augment it |
+    | `:name` | No | The name of the step |
 
-###Processor:
+  - processor
 
-| Key | Optional? | Notes |
-|---|---|---|
-| `:processor` | No | A function that gets the context returns a result that is [assoc](https://clojuredocs.org/clojure.core/assoc)ed into the context on the given path|
-| `:path` | No | Path where to assoc the result of the processor |
-| `:name` | No | The name of the step |
- 
-       
+    | Key | Optional? | Notes |
+    |---|---|---|
+    | `:processor` | No | A function that gets the context returns a result that is [assoc](https://clojuredocs.org/clojure.core/assoc)ed into the context on the given path|
+    | `:path` | No | Path where to assoc the result of the processor |
+    | `:name` | No | The name of the step |
+
+
 - **initial-ctx** The context data that gets passed to the steps functions. Must be a map.
-               
+
 - **on-success**  Callback that gets called with the context if all steps succeeded.
 - **on-anomaly**   Callback that gets called with an anomaly when any step returns one.
 - **on-exception** Callback that gets called with an exception when any step triggers one.
@@ -71,7 +79,7 @@ It is possible to redefine what an anomaly is by passing the predicate anomaly? 
 Processors are maps with the following keys:
 
 - **:processor** A function that gets a context map and returns data. Can be asynchronous.
-               If it returns an anomaly, or it triggers an error, further steps execution will be short-circuited.
+                 If it returns an anomaly, or it triggers an error, further steps execution will be short-circuited.
 - **:path** A vector that determines where in the context will the resolve result be associated.
 - **:name** A descriptive name for the step
 
@@ -79,68 +87,83 @@ Processors are maps with the following keys:
 
 Taps are maps with the following keys:
 
-- **:tap**   A function that gets the context map. If it succeeds, the result is then ignored.
-            It will still block the steps processing if it is asynchronous, and it will interrupt the steps execution
-            if it returns an anomaly, or it triggers an exception
-- **:name**  A descriptive name for the step
+- **:tap**  A function that gets the context map. If it succeeds, the result is then ignored.
+            It will still block the steps processing if it is asynchronous, and it will interrupt the steps execution if it returns an anomaly, or it triggers an exception
+- **:name** A descriptive name for the step
 
-### <a name="runtimeContext"></a>Runtime context
+### <a name="runtimeContext"></a>Fonda Runtime Context
 
-Log functions are called with the runtime context. The runtime context is a map that contains, among other things, 
-the context that is passed to each step. It also contains:
+Log functions are called with the runtime internal context. This is different from the context passed to the steps and it is only exposed to the these functions for logging purposes. The runtime context is a map that contains:
 
-- **:step-log** A collection of step logs. By default only step names are logged.
+- **:ctx**       The context that was threaded through the steps.
+- **:step-log**  A collection of step logs. By default only step names are logged.
+- **:anomaly**   The anomaly caused by one of the steps, if any.
+- **:exception** The exception caused by one of the steps _or taps_, if any.
 
-
-## Example
+## Full Example
 
 ```clojure
 (fonda/execute
-  {:log-exception   (fn [{:keys [ctx error step-log]}] 
-                      (js/console.log "Exception happened:" error))
-   
-   :log-anomaly     (fn [{:keys [ctx anomaly step-log]}] 
-                      (js/console.log "An anomaly happened:" anomaly))
-   
-   :log-success     (fn [{:keys [ctx step-log]}] 
-                      (js/console.log "Operation successful!"))
-   }
-  
-  [
-   ;; Processor that retrieves data remotely
-   {:processor      (fn [ctx] 
-                      (ajax/get "http://remote-thing-url"))
-    :name             "get-remote-thing"
-    :path             [:remote-thing] }
-   
-   ;; Processor that processes the data
-   {:processor      (fn [{:keys [remote-thing]}] 
-                       (process-remote-thing remote-thing))
-    :name             "process-thing"
-    :path             [:remote-thing-processed]}
-   
-   ;; Tap that logs things
-   {:tap            (fn [{:keys [remote-thing]}] 
-                      (js/console.log "remote thing:"))}
-   ]
+  {:log-exception   (fn [{:keys [ctx exception step-log]}]
+                      (println "Oh noes! An exception happened:" exception))
 
-  ;; On success
-  (fn [{:keys [remote-thing-processed]}] 
+   :log-anomaly     (fn [{:keys [ctx anomaly step-log]}]
+                      (println "Well ok, some anomaly happened:" anomaly))
+
+   :log-success     (fn [{:keys [ctx step-log]}]
+                      (println "Operation successful!"))}
+
+  [{:processor      (fn [ctx]
+                      (ajax/GET "http://remote-thing-url.com" {:params (:remote-thing-params ctx)})
+    :name           "get-remote-thing"
+    :path           [:remote-thing-response]}
+
+   {:tap            (fn [{:keys [remote-thing-response]}]
+                      (println "the remote thing response was:" remote-thing-response))}
+
+   {:processor      process-remote-thing-response ;; Pure function - ctx in - ctx out
+    :name           "process-thing-response"
+    :path           [:remote-thing]}]
+
+  {:foo :bar}
+
+  ;; on-success
+  (fn [{:keys [remote-thing-processed]}]
    (call-on-success-cb remote-thing-processed))
-   
-  ;; On anomaly
-  (fn [anomaly] 
+
+  ;; on-anomaly
+  (fn [anomaly]
    (call-on-anomaly-cb anomaly))
-   
-  ;; On error
-  (fn [error] 
+
+  ;; on-error
+  (fn [error]
    (call-on-error-cb error)))
 
 ```
 
 ## Trivia
- 
+
 The name fonda got inspired by Jane Fonda's step fitness programs.
 ![](https://img.buzzfeed.com/buzzfeed-static/static/enhanced/webdr03/2013/8/15/10/anigif_enhanced-buzz-31474-1376578012-1.gif?downsize=700:*&output-format=auto&output-quality=auto)
 
 As with the fitness program, fonda consist of well-curated steps.
+
+## Contributing
+
+See [CONTRIBUTING.md](./CONTRIBUTING.md).
+
+## License
+
+Copyright 2018 Elastic Path
+
+Licensed under the Apache License, Version 2.0 (the "License");
+you may not use this file except in compliance with the License.
+You may obtain a copy of the License at
+
+http://www.apache.org/licenses/LICENSE-2.0
+
+Unless required by applicable law or agreed to in writing, software
+distributed under the License is distributed on an "AS IS" BASIS,
+WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+See the License for the specific language governing permissions and
+limitations under the License.
