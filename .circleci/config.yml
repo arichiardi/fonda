@@ -47,7 +47,7 @@ save-cache: &save-cache
 
 
 jobs:
-  publish:
+  publish-snapshot:
     <<: *defaults
     environment:
       PUBLISH_SNAPSHOT: true
