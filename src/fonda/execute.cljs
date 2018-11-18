@@ -4,11 +4,11 @@
             [fonda.step :as st]
             [cljs.spec.alpha :as s]))
 
-(s/fdef set-tap-result
+(s/fdef assoc-tap-result
   :args (s/cat :runtime-ctx ::r/runtime-context
                :res any?))
 
-(defn set-tap-result [{:as runtime-ctx :keys [anomaly?]} res]
+(defn assoc-tap-result [{:as runtime-ctx :keys [anomaly?]} res]
   (if (anomaly? res)
     (assoc runtime-ctx :anomaly res)
     runtime-ctx))
@@ -36,17 +36,17 @@
   If an exception gets triggerd, an exception is added on the context.
   If an anomaly is returned, an anomaly is added to the context"
   [{:as runtime-ctx :keys [ctx log-step-fn]}
-                 {:as step :keys [path name processor tap]}]
+   {:as step :keys [path name processor tap]}]
   (try
     (let [res (if processor (processor ctx) (tap ctx))
-          set-result-fn (cond
-                          (not (nil? tap)) (partial set-tap-result runtime-ctx)
-                          (not (nil? processor)) (partial assoc-processor-result runtime-ctx path))
-          set-result #(-> (set-result-fn %) (update :step-log log-step-fn step res))]
+          assoc-result-fn (cond
+                            (not (nil? tap)) (partial assoc-tap-result runtime-ctx)
+                            (not (nil? processor)) (partial assoc-processor-result runtime-ctx path))
+          assoc-result #(-> (assoc-result-fn %) (update :step-log log-step-fn step res))]
 
       (if (a/async? res)
-        (a/continue res set-result #(assoc runtime-ctx :exception %))
-        (set-result res)))
+        (a/continue res assoc-result #(assoc runtime-ctx :exception %))
+        (assoc-result res)))
 
     (catch :default e
       (assoc runtime-ctx :exception e))))
