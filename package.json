@@ -35,7 +35,7 @@
     "test:watch": "yarn shadow-cljs watch test"
   },
   "devDependencies": {
-    "shadow-cljs": "2.7.3"
+    "shadow-cljs": "2.7.4"
   },
   "dependencies": {}
 }
