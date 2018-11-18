@@ -49,6 +49,8 @@ save-cache: &save-cache
 jobs:
   publish:
     <<: *defaults
+    environment:
+      PUBLISH_SNAPSHOT: true
     steps:
       - checkout
       - restore_cache:
@@ -87,11 +89,10 @@ workflows:
           filters:  # required since `deploy` has tag filters AND requires `build`
             tags:
               only: /.*/
-      - publish:
+      - publish-snapshot:
           requires:
             - test
           filters:
-            tags:
-              only: /^v.*/
             branches:
-              ignore: /.*/
+              only:
+                - master

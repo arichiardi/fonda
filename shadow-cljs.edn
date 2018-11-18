@@ -1,6 +1,5 @@
 {:deps   {:aliases [:dev :test]}
- :builds {
-          :lib  {:target    :node-library
+ :builds {:lib  {:target    :node-library
                  :output-to "dist/fonda.js"
                  :exports   {:execute fonda.core/execute}
                  :release   {:compiler-options {:optimizations     :simple

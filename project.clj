@@ -6,8 +6,13 @@
                       {:exit-code exit-code}))
       process)))
 
+(defn publish-shapshot?
+  []
+  (= "true" (System/getenv "PUBLISH_SNAPSHOT")))
+
 (def +version+
-  (-> (ProcessBuilder. ["scripts/get-version.sh"])
+  (-> (ProcessBuilder. (into ["scripts/get-version.sh"]
+                             (when publish-shapshot? ["--snapshot"])))
       (.start)
       (throw-if-non-zero)
       (.getInputStream)
@@ -25,5 +30,8 @@
   :middleware [lein-tools-deps.plugin/resolve-dependencies-with-deps-edn]
   :lein-tools-deps/config {:config-files [:install :user :project]
                            :aliases [:dev :test]}
-  :repositories [["releases" {:username :env/clojars_username
-                              :password :env/clojars_password}]])
+
+  :deploy-repositories [["clojars" {:url "https://clojars.org/repo"
+                                    :username :env/clojars_username
+                                    :password :env/clojars_password
+                                    :sign-releases false}]])

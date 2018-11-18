@@ -27,6 +27,7 @@
     "url": "https://github.com/elasticpath/fonda"
   },
   "scripts": {
+    "print-version": "echo $npm_package_version",
     "repl": "yarn shadow-cljs watch lib",
     "watch": "yarn shadow-cljs watch lib",
     "build": "yarn shadow-cljs release lib",
