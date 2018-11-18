@@ -21,6 +21,9 @@
 
 (defproject com.elasticpath/fonda +version+
   :url "https://github.com/elasticpath/fonda"
+  :description "An async pipeline approach to functional core - imperative shell."
+  :license {:name "Apache License"
+            :url "http://www.apache.org/licenses/LICENSE-2.0"}
   :source-paths ["src"]
   :test-paths ["test"]
   :resource-paths []
