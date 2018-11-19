@@ -26,7 +26,7 @@ It is possible to redefine what an anomaly is by passing a predicate, `anomaly?`
 (ns my-namespace.core
   (:require [fonda.core :as fonda]))
 
-(fonda/execute config steps initial-ctx on-success on-anomaly on-exception)
+(fonda/execute config steps ctx on-success on-anomaly on-exception)
 ```
 
 The parameter order makes it easy to partially apply `execute` for leaner call sites.
@@ -38,9 +38,10 @@ The parameter order makes it easy to partially apply `execute` for leaner call s
 | Key | Optional? | Notes |
 |---|---|---|
 | `:anomaly?` | Yes | A function that gets a map and determines if it is an anomaly |
-| `:log-exception` | Yes | A function that gets called with the [runtime context](#runtimeContext) when there is an exception |
-| `:log-anomaly` | Yes | A function that gets called with the [runtime context](#runtimeContext) when a step returns an anomaly |
+| `:log-exception` | Yes | A function that gets called with the [fonda context](#fonda-context) when there is an exception |
+| `:log-anomaly` | Yes | A function that gets called with the [fonda context](#fonda-context) when a step returns an anomaly |
 | `:log-success` | Yes | A function that gets called after all the steps succeed |
+| `:initial-ctx` | Yes | The data that initializes the context. Must be a map |
 
 - **steps**: Each item on the steps collection must be either a Tap or a Processor
 
@@ -60,9 +61,8 @@ The parameter order makes it easy to partially apply `execute` for leaner call s
     | `:name` | No | The name of the step |
 
 
-- **initial-ctx** The context data that gets passed to the steps functions. Must be a map.
-
-- **on-success**  Callback that gets called with the context if all steps succeeded.
+- **ctx**          The runtime context, merged to the initial context. Must be a map.
+- **on-success**   Callback that gets called with the context if all steps succeeded.
 - **on-anomaly**   Callback that gets called with an anomaly when any step returns one.
 - **on-exception** Callback that gets called with an exception when any step triggers one.
 
@@ -70,9 +70,9 @@ The parameter order makes it easy to partially apply `execute` for leaner call s
 
 - If any step returns an anomaly, or triggers an exception, the execution of the steps stops and the global taps will be called.
 
-- If any step returns an anomaly, the log-anomaly will be called with the RuntimeContext, and then the on-anomaly callback
+- If any step returns an anomaly, the log-anomaly will be called with the [`FondaContext`](#fonda-context) and then the on-anomaly callback
 
-- If any step triggers an exception, the log-exception will be called with the RuntimeContext, and then on-exception callback.
+- If any step triggers an exception, the log-exception will be called with the [`FondaContext`](#fonda-context) and then on-exception callback.
 
 #### Processor steps
 
@@ -91,9 +91,11 @@ Taps are maps with the following keys:
             It will still block the steps processing if it is asynchronous, and it will interrupt the steps execution if it returns an anomaly, or it triggers an exception
 - **:name** A descriptive name for the step
 
-### <a name="runtimeContext"></a>Fonda Runtime Context
+### <a name="fonda-context></a>Fonda Context
 
-Log functions are called with the runtime internal context. This is different from the context passed to the steps and it is only exposed to the these functions for logging purposes. The runtime context is a map that contains:
+Log functions are called with the internal context. This is different from the context passed to the steps and it is only exposed to the these functions for logging purposes.
+
+The `FondaContext` is a record that contains:
 
 - **:ctx**       The context that was threaded through the steps.
 - **:step-log**  A collection of step logs. By default only step names are logged.
@@ -104,7 +106,9 @@ Log functions are called with the runtime internal context. This is different fr
 
 ```clojure
 (fonda/execute
-  {:log-exception   (fn [{:keys [ctx exception step-log]}]
+  {:initial-ctx     {:env-var-xyz "value"}
+
+   :log-exception   (fn [{:keys [ctx exception step-log]}]
                       (println "Oh noes! An exception happened:" exception))
 
    :log-anomaly     (fn [{:keys [ctx anomaly step-log]}]

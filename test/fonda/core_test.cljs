@@ -117,7 +117,7 @@
                        exception-cb-throw)))))
 
 (deftest one-unsuccessful-sync-processor-log-anomaly-test
-  (testing "Passing one synchronous unsuccessful processor should call the log-anomaly with the runtime context"
+  (testing "Passing one synchronous unsuccessful processor should call the log-anomaly with the fonda context"
     (async done
       (let [processor-res (anomaly :cognitect.anomalies/incorrect)
             processor {:path      [:processor-path]
@@ -144,7 +144,7 @@
                        exception-cb-throw)))))
 
 (deftest one-unsuccessful-async-processor-log-anomaly-test
-  (testing "Passing one asynchronous unsuccessful processor should call the log-anomaly with the runtime context"
+  (testing "Passing one asynchronous unsuccessful processor should call the log-anomaly with the fonda context"
     (async done
       (let [processor-res (anomaly :cognitect.anomalies/incorrect)
             processor {:path      [:processor-path]
@@ -182,7 +182,7 @@
                        (fn [err] (is (= tap-res err)) (done)))))))
 
 (deftest one-exceptional-sync-processor-exception-tap-test
-  (testing "Passing one synchronous exceptional processor should call log-exception with the runtime context"
+  (testing "Passing one synchronous exceptional processor should call log-exception with the fonda context"
     (async done
       (let [processor-res (js/Error "Bad exception")
             processor {:path      [:processor-path]
@@ -210,7 +210,7 @@
                        (fn [err] (is (= processor-res err)) (done)))))))
 
 (deftest one-exceptional-async-processor-log-exception-test
-  (testing "Passing one asynchronous exceptional processor should call log-exception with the runtime context"
+  (testing "Passing one asynchronous exceptional processor should call log-exception with the fonda context"
     (async done
       (let [processor-res (js/Error "Bad exception")
             processor {:path      [:processor-path]
@@ -225,9 +225,9 @@
                        (fn [_]))))))
 
 (deftest log-success-with-no-steps-receives-empty-log-test
-  (testing "A tap should be called with an empty step-log on the runtime context"
+  (testing "A tap should be called with an empty step-log on the fonda context"
     (async done
-      (let [log-success (fn [{:as runtime-ctx :keys [step-log]}]
+      (let [log-success (fn [{:as fonda-ctx :keys [step-log]}]
                           (is (= step-log [])) (done))]
         (fonda/execute {:log-success log-success}
                        [] {}
@@ -429,7 +429,7 @@
                                           (= 0 @step3-counter))) (done)))))))
 
 (deftest multiple-unsuccessful-steps-global-log-anomaly-receives-steps-log-test
-  (testing "The tap should be called with the log of the previous steps on the runtime context"
+  (testing "The tap should be called with the log of the previous steps on the fonda context"
     (async done
       (let [step1-res 1
             step1 {:path      [:step1]
