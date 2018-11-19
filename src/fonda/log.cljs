@@ -7,9 +7,6 @@
   (binding [*print-fn* *print-err-fn*]
     (apply println args)))
 
-(s/fdef default-log-exception
-        :args (s/cat :runtime-ctx ::r/runtime-context-sync))
-
 (defn default-log-exception [{:keys [ctx step-log exception]}]
   (println-err "Fonda found an exception:" exception)
   (println-err "ctx:" ctx)
