@@ -91,7 +91,7 @@ Taps are maps with the following keys:
             It will still block the steps processing if it is asynchronous, and it will interrupt the steps execution if it returns an anomaly, or it triggers an exception
 - **:name** A descriptive name for the step
 
-### <a name="fonda-context></a>Fonda Context
+### <a name="fonda-context"></a>Fonda Context
 
 Log functions are called with the internal context. This is different from the context passed to the steps and it is only exposed to the these functions for logging purposes.
 
