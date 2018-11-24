@@ -15,6 +15,7 @@
 (s/def ::on-exception fn?)
 (s/def ::on-anomaly fn?)
 (s/def ::queue (s/coll-of ::st/step))
+(s/def ::stack (s/coll-of ::st/step))
 (s/def ::step-log any?)
 
 (s/def ::fonda-context-async a/async?)
@@ -28,6 +29,7 @@
                    ::on-anomaly
                    ::on-exception
                    ::queue
+                   ::stack
                    ::step-log
                    ::exception
                    ::anomaly]))
@@ -67,6 +69,9 @@
 
    ;; The steps that haven't been already processed
    queue
+
+   ;; The steps that have already been processed
+   stack
 
    ;; A log, each step can add information here
    step-log])

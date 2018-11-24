@@ -444,3 +444,46 @@
                        success-cb-throw
                        (fn [_])
                        exception-cb-throw)))))
+
+(deftest log-anomaly-gets-steps-stack-test
+  (testing "Anomaly logger gets the steps stack on the FondaContext"
+    (async done
+      (let [processor-res (anomaly :cognitect.anomalies/incorrect)
+            processor {:path      [:processor-path]
+                       :name      "processor name"
+                       :processor (fn [_] processor-res)}
+            log-anomaly (fn [{:keys [stack]}]
+                          (is (= (:name processor) (:name (last stack)))) (done))]
+        (fonda/execute {:log-anomaly log-anomaly}
+                       [processor] {}
+                       success-cb-throw
+                       (fn [_])
+                       exception-cb-throw)))))
+
+(deftest log-exception-gets-steps-stack-test
+  (testing "Anomaly logger gets the steps stack on the FondaContext"
+    (async done
+      (let [processor {:path      [:processor-path]
+                       :name      "processor name"
+                       :processor (fn [_] (throw (js/Error "An exception happened")))}
+            log-exception (fn [{:keys [stack]}]
+                          (is (= (:name processor) (:name (last stack)))) (done))]
+        (fonda/execute {:log-exception log-exception}
+                       [processor] {}
+                       success-cb-throw
+                       (fn [_])
+                       exception-cb-throw)))))
+
+(deftest log-success-gets-steps-stack-test
+  (testing "Anomaly logger gets the steps stack on the FondaContext"
+    (async done
+      (let [processor {:path      [:processor-path]
+                       :name      "processor name"
+                       :processor (fn [_] :happy-result)}
+            log-success (fn [{:keys [stack]}]
+                          (is (= (:name processor) (:name (last stack)))) (done))]
+        (fonda/execute {:log-success log-success}
+                       [processor] {}
+                       success-cb-throw
+                       (fn [_])
+                       exception-cb-throw)))))

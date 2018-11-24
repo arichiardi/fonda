@@ -135,7 +135,7 @@
 
   It blocks the execution on the asynchronous steps.  If any step assocs
   an exception to the FondaContext record, the execution stops."
-  [{:as fonda-ctx :keys [queue exception anomaly]}]
+  [{:as fonda-ctx :keys [queue stack exception anomaly]}]
   (if (a/async? fonda-ctx)
     (a/continue fonda-ctx execute-steps)
     (let [step (peek queue)]
@@ -145,4 +145,5 @@
         (recur
          (-> fonda-ctx
              (assoc :queue (pop queue))
+             (assoc :stack (conj stack step))
              (try-step step)))))))
