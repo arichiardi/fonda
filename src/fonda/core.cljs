@@ -71,6 +71,7 @@
            :on-anomaly    on-anomaly
            :on-exception  on-exception
            :queue         (st/steps->queue steps)
+           :stack         []
            :step-log      []
            :log-step-fn   (or log-step-fn e/default-log-step-fn)})
          (e/execute-steps)
