@@ -10,15 +10,14 @@
   []
   (= "true" (System/getenv "PUBLISH_SNAPSHOT")))
 
-;(def +version+
-;  (-> (ProcessBuilder. (into ["scripts/get-version.sh"]
-;                             (when publish-shapshot? ["--snapshot"])))
-;      (.start)
-;      (throw-if-non-zero)
-;      (.getInputStream)
-;      slurp
-;      (clojure.string/trim-newline)))
-(def +version+ "0.0.2")
+(def +version+
+  (-> (ProcessBuilder. (into ["scripts/get-version.sh"]
+                             (when publish-shapshot? ["--snapshot"])))
+      (.start)
+      (throw-if-non-zero)
+      (.getInputStream)
+      slurp
+      (clojure.string/trim-newline)))
 
 (defproject com.elasticpath/fonda +version+
   :url "https://github.com/elasticpath/fonda"
