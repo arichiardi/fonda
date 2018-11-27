@@ -9,7 +9,6 @@
   (s/keys :opt-un [::r/anomaly?
                    ::r/log-exception
                    ::r/log-anomaly
-                   ::r/log-step-fn
                    ::r/initial-ctx]))
 
 (s/def ::steps (s/coll-of ::st/step))
@@ -57,8 +56,7 @@
    (let [{:keys [anomaly?
                  log-exception
                  log-anomaly
-                 log-success
-                 log-step-fn]} config]
+                 log-success]} config]
 
      (-> (r/map->FondaContext
           {:anomaly?      (or anomaly? fonda.anomaly/anomaly?)
@@ -70,9 +68,7 @@
            :on-anomaly    on-anomaly
            :on-exception  on-exception
            :queue         (st/steps->queue steps)
-           :stack         []
-           :step-log      []
-           :log-step-fn   (or log-step-fn e/default-log-step-fn)})
+           :stack         []})
          (e/execute-steps)
          (e/execute-loggers)
          (e/deliver-result)))))

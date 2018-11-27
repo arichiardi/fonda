@@ -224,17 +224,6 @@
                        anomaly-cb-throw
                        (fn [_]))))))
 
-(deftest log-success-with-no-steps-receives-empty-log-test
-  (testing "A tap should be called with an empty step-log on the fonda context"
-    (async done
-      (let [log-success (fn [{:as fonda-ctx :keys [step-log]}]
-                          (is (= step-log [])) (done))]
-        (fonda/execute {:log-success log-success}
-                       [] {}
-                       (fn [_])
-                       anomaly-cb-throw
-                       exception-cb-throw)))))
-
 (deftest multiple-successful-synchronous-steps-test
   (testing "Passing multiple successful synchronous steps should call the on-success callback with the augmented context"
     (async done
@@ -266,23 +255,6 @@
                        anomaly-cb-throw
                        exception-cb-throw)))))
 
-(deftest multiple-successful-asynchronous-steps-log-success-test
-  (testing "Passing multiple successful asynchronous steps should call log-success with all the steps on the step-log"
-    (async done
-      (let [step1-val 1
-            step2-fn inc]
-        (fonda/execute {:log-success (fn [{:keys [step-log]}]
-                                       (is (= ["step1" "step2"] step-log)) (done))}
-                       [{:path      [:step1]
-                         :name      "step1"
-                         :processor (fn [_] (js/Promise.resolve step1-val))}
-                        {:path      [:step2]
-                         :name      "step2"
-                         :processor (fn [{:keys [step1]}]
-                                      (js/Promise.resolve (step2-fn step1)))}] {}
-                       (fn [_])
-                       anomaly-cb-throw
-                       exception-cb-throw)))))
 
 (deftest multiple-successful-asynchronous-and-synchronous-steps-test
   (testing "Passing multiple successful asynchronous and synchronous steps should call the on-success callback with the augmented context"
@@ -427,20 +399,3 @@
                        exception-cb-throw
                        (fn [err] (is (and (= 1 @step1-counter)
                                           (= 0 @step3-counter))) (done)))))))
-
-(deftest multiple-unsuccessful-steps-global-log-anomaly-receives-steps-log-test
-  (testing "The tap should be called with the log of the previous steps on the fonda context"
-    (async done
-      (let [step1-res 1
-            step1 {:path      [:step1]
-                   :name      "step1"
-                   :processor (fn [_] step1-res)}
-            tap {:name "tap name"
-                 :tap  (fn [_] (anomaly :cognitect.anomalies/incorrect))}]
-        (fonda/execute {:log-anomaly (fn [{:keys [step-log]}] (is (= step-log ["step1" "tap name"])) (done))}
-                       [step1
-                        tap]
-                       {}
-                       success-cb-throw
-                       (fn [_])
-                       exception-cb-throw)))))
