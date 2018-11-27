@@ -2,7 +2,6 @@
   (:require [fonda.anomaly]
             [fonda.execute :as e]
             [fonda.runtime :as r]
-            [fonda.log :as l]
             [fonda.step :as st]
             [cljs.spec.alpha :as s]))
 
@@ -63,8 +62,8 @@
 
      (-> (r/map->FondaContext
           {:anomaly?      (or anomaly? fonda.anomaly/anomaly?)
-           :log-exception (or log-exception l/default-log-exception)
-           :log-anomaly   (or log-anomaly l/default-log-anomaly)
+           :log-exception log-exception
+           :log-anomaly   log-anomaly
            :log-success   log-success
            :ctx           (merge (:initial-ctx config) ctx)
            :on-success    on-sucess
