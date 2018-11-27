@@ -52,26 +52,6 @@
       (assoc fonda-ctx :exception e))))
 
 
-
-(s/fdef try-global-tap
-  :args (s/cat :tap-fn ::st/tap
-               :fonda-ctx ::r/fonda-context))
-
-(defn- try-logger
-  "Runs a global tap function.
-  If the tap function triggers any exception, adds an exception to the FondaContext record"
-  [tap-fn fonda-ctx]
-  (try
-    (let [res (tap-fn fonda-ctx)]
-      (if (a/async? res)
-        (a/continue res (fn [_] fonda-ctx) #(assoc fonda-ctx :exception %))
-        fonda-ctx))
-
-    (catch :default e
-      (assoc fonda-ctx :exception e))))
-
-
-
 (s/fdef deliver-result
   :args (s/cat :fonda-ctx ::r/fonda-context))
 
@@ -117,12 +97,11 @@
   (if (a/async? fonda-ctx)
     (a/continue fonda-ctx execute-loggers log-exception)
 
-    (if-let [log-fn (cond
-                      (and exception log-exception) log-exception
-                      (and anomaly log-anomaly) log-anomaly
-                      (and (not anomaly) (not exception) log-success) log-success
-                      )]
-      (try-logger log-fn fonda-ctx)
+    (let [log-fn (cond
+                        (and exception log-exception) log-exception
+                        (and anomaly log-anomaly) log-anomaly
+                        (and (not anomaly) (not exception) log-success) log-success)]
+      (when log-fn (log-fn fonda-ctx))
       fonda-ctx)))
 
 
@@ -139,7 +118,6 @@
   (if (a/async? fonda-ctx)
     (a/continue fonda-ctx execute-steps)
     (let [step (peek queue)]
-      ;;(println "step:" step)
       (if (or (not step) exception anomaly)
         fonda-ctx
         (recur
