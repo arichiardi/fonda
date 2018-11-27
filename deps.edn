@@ -1,8 +1,6 @@
 {:paths   ["src"]
- :deps    {}
  :aliases {:test {:extra-paths ["test"]}
-           :dev  {:extra-paths ["dev"]
-                  :extra-deps  {org.clojure/clojure       {:mvn/version "1.10.0-beta6"}
+           :dev  {:extra-deps  {org.clojure/clojure       {:mvn/version "1.10.0-beta6"}
                                 org.clojure/clojurescript {:mvn/version "1.10.439"}
                                 expound                   {:mvn/version "0.7.1"}
                                 org.clojure/test.check    {:mvn/version "0.10.0-alpha3" :exclusions [org.clojure/clojure]}
