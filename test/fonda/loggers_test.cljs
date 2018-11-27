@@ -37,7 +37,7 @@
       (fonda/execute {:log-anomaly log-anomaly}
                      [processor] {}
                      success-cb-throw
-                     (fn [_])
+                     (fn [_])                               ;; Anomaly callbacks are tested elsewhere
                      exception-cb-throw))))
 
 (deftest log-exception-gets-steps-stack-test
@@ -51,7 +51,7 @@
                      [processor] {}
                      success-cb-throw
                      anomaly-cb-throw
-                     (fn [_])))))
+                     (fn [_])))))                           ;; Exception callbacks are tested elsewhere
 
 (deftest log-success-gets-steps-stack-test
   (async done
@@ -62,7 +62,7 @@
                         (is (= (:name processor) (:name (last stack)))) (done))]
       (fonda/execute {:log-success log-success}
                      [processor] {}
-                     (fn [_])
+                     (fn [_])                               ;; Success callbacks are tested elsewhere
                      anomaly-cb-throw
                      exception-cb-throw))))
 
@@ -140,7 +140,7 @@
                         (done))]
       (fonda/execute {:log-success log-success}
                      [processor] {}
-                     (fn [_])
+                     (fn [_])                               ;; ;; Success callbacks are tested elsewhere
                      anomaly-cb-throw
                      exception-cb-throw))))
 
@@ -157,7 +157,7 @@
       (fonda/execute {:log-anomaly log-anomaly}
                      [processor] {}
                      success-cb-throw
-                     (fn [_])
+                     (fn [_])                               ;; Anomaly callbacks are tested elsewhere
                      exception-cb-throw))))
 
 (deftest log-exception-gets-stack-and-exception-test
@@ -174,4 +174,4 @@
                      [processor] {}
                      success-cb-throw
                      anomaly-cb-throw
-                     (fn [_])))))
+                     (fn [_])))))                           ;; Exception callbacks are tested elsewhere
