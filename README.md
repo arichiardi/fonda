@@ -38,8 +38,8 @@ The parameter order makes it easy to partially apply `execute` for leaner call s
 | Key | Optional? | Notes |
 |---|---|---|
 | `:anomaly?` | Yes | A function that gets a map and determines if it is an anomaly |
-| `:log-exception` | Yes | A function that gets called with the [fonda context](#logging) when there is an exception |
-| `:log-anomaly` | Yes | A function that gets called with the [fonda context](#logging) when a step returns an anomaly |
+| `:log-exception` | Yes | A function that gets called with the [log map](#log-map) when there is an exception |
+| `:log-anomaly` | Yes | A function that gets called with the [log map](#log-map) when a step returns an anomaly |
 | `:log-success` | Yes | A function that gets called after all the steps succeed |
 | `:initial-ctx` | Yes | The data that initializes the context. Must be a map |
 
@@ -68,11 +68,14 @@ The parameter order makes it easy to partially apply `execute` for leaner call s
 
 ### Error and Anomaly Handling
 
-- If any step returns an anomaly, or triggers an exception, the execution of the steps stops and the global taps will be called.
+- If any step returns an anomaly, or triggers an exception, the execution of the steps stops. Then, one of the loggers will be called
+ (non blocking, he result of the logger is ignored), followed by one of the callbacks.
 
-- If any step returns an anomaly, the log-anomaly will be called with the [`LogMap`](#log-map) and then the on-anomaly callback
+- If any step returns an anomaly, the log-anomaly will be called with the [log map](#log-map) and then the on-anomaly callback
 
-- If any step triggers an exception, the log-exception will be called with the [`LogMap`](#log-map) and then on-exception callback.
+- If any step triggers an exception, the log-exception will be called with the [log map](#log-map) and then on-exception callback.
+
+- Otherwise, if all the steps where executed successfully, the log-success will be called with the [log map](#log-map), and then the on-success callback.
 
 #### Processor steps
 
@@ -94,21 +97,21 @@ Taps are maps with the following keys:
 ### <a name="logging"></a>Logging
 
 Log functions are called after the steps have been executed. Log functions are non-blocking, and their returning value
-is ignored. Their only parameter is the [`LogMap`](#log-map)
+is ignored. Their only parameter is the [log map](#log-map)
 
 If all the steps succeeded, the `log-success` function will be called.
 
-If any step return an anomaly, the `log-anomaly` would be called instead.
+If any step return an anomaly, the `log-anomaly` will be called instead.
 
-If any step threw an exception, the `log-exception` function would be called.
+If any step threw an exception, the `log-exception` function will be called.
 
  
-#### <a name="log-map"></a>LogMap
+#### <a name="log-map"></a>Log map
 
 It is a map that is passed to the logging functions.
 This is different from the context passed to the steps and it is only exposed to the these functions for logging purposes.
 
-The `LogMap` is a record that contains:
+The **log map** is a record that contains:
 
 - **:ctx**       The context that was threaded through the steps.
 - **:anomaly**   The anomaly caused by one of the steps, if any.
