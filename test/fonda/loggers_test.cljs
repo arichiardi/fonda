@@ -123,3 +123,54 @@
                        (fn [_])
                        (fn [_])
                        exception-cb)))))
+
+(deftest log-map-is-passed-to-loggers-first-test
+
+  (testing "log-success gets ctx and stack"
+    (async done
+      (let [processor {:path      [:processor-path]
+                       :name      "processor name"
+                       :processor (fn [_] :a)}
+            log-success (fn [{:keys [ctx stack]}]
+                          (is (= ctx {:processor-path :a}))
+                          (is (= processor (select-keys (last stack) [:path :name :processor])))
+                          (done))]
+        (fonda/execute {:log-success log-success}
+                       [processor] {}
+                       (fn [_])
+                       (fn [_])
+                       (fn [_]))))))
+
+(deftest log-map-is-passed-to-loggers-second-test
+  (testing "log-anomaly gets ctx, stack, and anomaly"
+    (async done
+      (let [returned-anomaly (anomaly :cognitect.anomalies/incorrect)
+            processor {:path      [:processor-path]
+                       :name      "processor name"
+                       :processor (fn [_] returned-anomaly)}
+            log-anomaly (fn [{:keys [stack anomaly]}]
+                          (is (= processor (select-keys (last stack) [:path :name :processor])))
+                          (is (= anomaly returned-anomaly))
+                          (done))]
+        (fonda/execute {:log-anomaly log-anomaly}
+                       [processor] {}
+                       (fn [_])
+                       (fn [_])
+                       (fn [_]))))))
+
+(deftest log-map-is-passed-to-loggers-third-test
+  (testing "log-exception gets ctx, stack and exception"
+    (async done
+      (let [thrown-exception (js/Error "A really bad error")
+            processor {:path      [:processor-path]
+                       :name      "processor name"
+                       :processor (fn [_] (throw thrown-exception))}
+            log-exception (fn [{:keys [stack exception]}]
+                            (is (= processor (select-keys (last stack) [:path :name :processor])))
+                            (is (= exception thrown-exception))
+                            (done))]
+        (fonda/execute {:log-exception log-exception}
+                       [processor] {}
+                       (fn [_])
+                       (fn [_])
+                       (fn [_]))))))

@@ -4,6 +4,8 @@
             [fonda.step :as st]
             [cljs.spec.alpha :as s]))
 
+(def log-map-keys [:exception :anomaly :ctx :stack])
+
 (s/fdef assoc-tap-result
   :args (s/cat :fonda-ctx ::r/fonda-context
                :res any?))
@@ -35,18 +37,17 @@
   "Tries running the given step (a tap step, or a processor step).
   If an exception gets triggerd, an exception is added on the context.
   If an anomaly is returned, an anomaly is added to the context"
-  [{:as fonda-ctx :keys [ctx log-step-fn]}
+  [{:as fonda-ctx :keys [ctx]}
    {:as step :keys [path name processor tap]}]
   (try
     (let [res (if processor (processor ctx) (tap ctx))
           assoc-result-fn (cond
                             (not (nil? tap)) (partial assoc-tap-result fonda-ctx)
-                            (not (nil? processor)) (partial assoc-processor-result fonda-ctx path))
-          assoc-result #(-> (assoc-result-fn %) (update :step-log log-step-fn step res))]
+                            (not (nil? processor)) (partial assoc-processor-result fonda-ctx path))]
 
       (if (a/async? res)
-        (a/continue res assoc-result #(assoc fonda-ctx :exception %))
-        (assoc-result res)))
+        (a/continue res assoc-result-fn #(assoc fonda-ctx :exception %))
+        (assoc-result-fn res)))
 
     (catch :default e
       (assoc fonda-ctx :exception e))))
@@ -69,19 +70,6 @@
       (cb))))
 
 
-
-(s/fdef default-log-step-fn
-  :args (s/cat :step-log ::r/step-log
-               :step ::st/step
-               :result any?))
-
-(defn- default-log-step-fn
-  "Default function for adding step information on the log"
-  [step-log step result]
-  (conj step-log (:name step)))
-
-
-
 ;;;;;;;;;;;;
 ;; PUBLIC ;;
 ;;;;;;;;;;;;
@@ -94,14 +82,14 @@
   If the context has an anomaly, calls log-anomaly.
   If the context has an exception, calls log-exception"
   [{:as fonda-ctx :keys [exception anomaly log-exception log-anomaly log-success]}]
+
   (if (a/async? fonda-ctx)
     (a/continue fonda-ctx execute-loggers log-exception)
 
-    (let [log-fn (cond
-                        (and exception log-exception) log-exception
-                        (and anomaly log-anomaly) log-anomaly
-                        (and (not anomaly) (not exception) log-success) log-success)]
-      (when log-fn (log-fn fonda-ctx))
+    (let [log-fn (cond (and exception log-exception) log-exception
+                       (and anomaly log-anomaly) log-anomaly
+                       (and (not anomaly) (not exception) log-success) log-success)]
+      (when log-fn (log-fn (select-keys fonda-ctx log-map-keys)))
       fonda-ctx)))
 
 
@@ -121,7 +109,7 @@
       (if (or (not step) exception anomaly)
         fonda-ctx
         (recur
-         (-> fonda-ctx
-             (assoc :queue (pop queue))
-             (assoc :stack (conj stack step))
-             (try-step step)))))))
+          (-> fonda-ctx
+              (assoc :queue (pop queue))
+              (assoc :stack (conj stack step))
+              (try-step step)))))))
