@@ -4,95 +4,111 @@
 
 An async pipeline approach to functional core - imperative shell from by Gary Bernhardt's [Boundaries talk.](https://www.destroyallsoftware.com/talks/boundaries)
 
-## Asynchronous pipeline of steps
+## Minimal Viable Example
+
+This example illustrates `fonda`'s basic mechanics:
+
+```clojure
+(ns fonda.example.simple
+  (:require [cljs-http.client :as http]
+            [cljs.core.async :as cca :include-macros true]
+            [clojure.set :as set]
+            [fonda.core :as fonda]))
+
+(fonda/execute
+ {:initial-ctx     {:username js/process.USER
+                    :password js/process.PASSWORD}}
+
+ [{:processor      (fn [ctx]
+                     (http/get "http://insecure-endpoint.com"
+                               {:basic-auth (select-keys ctx [:username :password])}))
+   :name           "get-all-things"
+   :path           [:github-response]}
+
+  {:processor      github-response->things   ;; Pure function - ctx in -> ctx out
+   :name           "github-response->things"
+   :path           [:github-things]}]
+
+ {:foo :bar}
+
+ ;; on-success
+ (fn [ctx]
+   (handle-success (:github-things ctx)))
+
+ ;; on-exception
+ (fn [exception]
+   (handle-exception exception)))
+```
 
 Fonda sequentially executes a series of [steps](#trivia), one after the other, augmenting a context map. The steps can be synchronous or asyncronous. After the steps are run, the termination callbacks will be executed.
 
-Fonda distinguishes between exceptions and anomalies.
+---
+*HINT*: The parameter order makes it easy to partially apply `execute` for leaner call sites.
+---
 
-- Anomaly
+If a `js/Error`, an exception in `fonda` parlance, is thrown it will be automatically caught and the chain short circuits. Then the following things happen in order:
+
+ * The `log-exception` function is called, if present, with the [log map](#log-map).
+ * The `on-exception` function is called with the `js/Error`.
+
+Exceptions are things we can't and don't want to recover from, like unexpected bugs.
+
+## Anomalies
+
+Anomaly is
 
   > Deviation or departure from the normal or common order, form, or rule.
 
-Anomalies are just data that define a recoverable "business" error. There is a stark contrast between anomalies and JavaScript `js/Error`s, Promise rejections, Java `Exception`s. The latter are never meant to be caught and are usually caused by programming bugs.
+There is a stark contrast between anomalies and JavaScript `js/Error`s, Promise rejections or Java `Exception`s: anomalies are data that define a recoverable error, like receiving a 409 (conflict) http status code that you can retry.
 
-Anomalies are first class citizens and by default they are maps containing the [`:cognitect.anomalies/anomaly`](https://github.com/cognitect-labs/anomalies) key.
+Anomalies are first class citizens in `fonda` and by default they are maps containing the [`:cognitect.anomalies/anomaly`](https://github.com/cognitect-labs/anomalies) key.
 
-It is possible to redefine what an anomaly is by passing a predicate, `anomaly?` to fonda.
+It is also possible to redefine what an anomaly is by passing a config predicate, `anomaly?`, so that client code can have its own representation of an anomaly.
 
-## Usage
+An anomaly returned by a step will also short circuit, with the following happening afterwards:
 
-```clojure
-(ns my-namespace.core
-  (:require [fonda.core :as fonda]))
+* The `log-anomaly` function is called if present.
+ * The `on-anomaly` function is called.
 
-(fonda/execute config steps ctx on-success on-anomaly on-exception)
-```
-
-The parameter order makes it easy to partially apply `execute` for leaner call sites.
-
+The following section describes the parameters `fonda/execute` accepts.
+ 
 ## Parameters
 
-- **config** A map with:
+- **config** - static configuration map
 
-| Key | Optional? | Notes |
-|---|---|---|
-| `:anomaly?` | Yes | A function that gets a map and determines if it is an anomaly |
-| `:log-exception` | Yes | A function that gets called with the [log map](#log-map) when there is an exception |
-| `:log-anomaly` | Yes | A function that gets called with the [log map](#log-map) when a step returns an anomaly |
-| `:log-success` | Yes | A function that gets called after all the steps succeed |
-| `:initial-ctx` | Yes | The data that initializes the context. Must be a map |
+    | Key | Optional? | Notes |
+    |---|---|---|
+    | `:anomaly?` | Yes | A function that gets a map and determines if it is an anomaly |
+    | `:log-exception` | Yes | A function that gets called with the [log map](#log-map) when there is an exception |
+    | `:log-anomaly` | Yes | A function that gets called with the [log map](#log-map) when a step returns an anomaly |
+    | `:log-success` | Yes | A function that gets called after all the steps succeed |
+    | `:initial-ctx` | Yes | The data that initializes the context. Must be a map, `{}` by default. |
 
-- **steps**: Each item on the steps collection must be either a Tap or a Processor
+ A function that gets the context map. If it succeeds, the result is then ignored.
+            It will still block the steps processing if it is asynchronous, and it will interrupt the steps execution if it returns an anomaly, or it triggers an exception
+
+- **steps** - each item must be either a `Tap` or a `Processor`
 
   - tap
 
     | Key | Optional? | Notes |
     |---|---|---|
-    | `:tap` | No | A function that gets the context but doesn't augment it |
+    | `:tap` | No | A function that gets the context but doesn't augment it. If it succeeds the result is ignored. If asynchronous it will still block the pipeline and interrupt the execution whenever either an anomaly or an exception happen. |
     | `:name` | No | The name of the step |
 
   - processor
 
     | Key | Optional? | Notes |
     |---|---|---|
-    | `:processor` | No | A function that gets the context returns a result that is [assoc](https://clojuredocs.org/clojure.core/assoc)ed into the context on the given path|
+    | `:processor` | No | A function that gets the context and returns data. The data is [assoced-in](https://clojuredocs.org/clojure.core/assoc-in) at the given path Can be asynchronous. If asynchronous it will still block the pipeline and interrupt the execution whenever either an anomaly or an exception happen. |
     | `:path` | No | Path where to assoc the result of the processor |
     | `:name` | No | The name of the step |
 
 
-- **ctx**          The runtime context, merged to the initial context. Must be a map.
-- **on-success**   Callback that gets called with the context if all steps succeeded.
-- **on-anomaly**   Callback that gets called with an anomaly when any step returns one.
-- **on-exception** Callback that gets called with an exception when any step triggers one.
-
-### Error and Anomaly Handling
-
-- If any step returns an anomaly, or triggers an exception, the execution of the steps stops. Then, one of the loggers will be called
- (non blocking, he result of the logger is ignored), followed by one of the callbacks.
-
-- If any step returns an anomaly, the log-anomaly will be called with the [log map](#log-map) and then the on-anomaly callback
-
-- If any step triggers an exception, the log-exception will be called with the [log map](#log-map) and then on-exception callback.
-
-- Otherwise, if all the steps where executed successfully, the log-success will be called with the [log map](#log-map), and then the on-success callback.
-
-#### Processor steps
-
-Processors are maps with the following keys:
-
-- **:processor** A function that gets a context map and returns data. Can be asynchronous.
-                 If it returns an anomaly, or it triggers an error, further steps execution will be short-circuited.
-- **:path** A vector that determines where in the context will the resolve result be associated.
-- **:name** A descriptive name for the step
-
-#### Tap steps
-
-Taps are maps with the following keys:
-
-- **:tap**  A function that gets the context map. If it succeeds, the result is then ignored.
-            It will still block the steps processing if it is asynchronous, and it will interrupt the steps execution if it returns an anomaly, or it triggers an exception
-- **:name** A descriptive name for the step
+- **ctx**          The runtime starting context, merged to the initial context. Must be a map, `{}` by default.
+- **on-success**   Callback that gets called with the context if all steps succeed.
+- **on-anomaly**   Callback that gets called with an anomaly when any of the steps returns one.
+- **on-exception** Callback that gets called with an exception when any of the steps throws one.
 
 ### <a name="logging"></a>Logging
 
@@ -105,7 +121,7 @@ If any step return an anomaly, the `log-anomaly` will be called instead.
 
 If any step threw an exception, the `log-exception` function will be called.
 
- 
+
 #### <a name="log-map"></a>Log map
 
 It is a map that is passed to the logging functions.
@@ -149,15 +165,15 @@ The **log map** is a record that contains:
 
   ;; on-success
   (fn [{:keys [remote-thing-processed]}]
-   (call-on-success-cb remote-thing-processed))
+   (handle-success remote-thing-processed))
 
   ;; on-anomaly
   (fn [anomaly]
-   (call-on-anomaly-cb anomaly))
+   (handle-anomaly anomaly))
 
-  ;; on-error
-  (fn [error]
-   (call-on-error-cb error)))
+  ;; on-exception
+  (fn [exception]
+   (handle-exception exception)))
 
 ```
 
