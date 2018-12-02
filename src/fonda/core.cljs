@@ -49,9 +49,8 @@
   - `ctx`          The runtime context, merged to the initial context. Must be a map.
   - `on-success`   Callback that gets called with the context if all the steps succeeded.
   - `on-anomaly`   Callback that gets called with an anomaly when any step returns one.
-  - `on-exception` Callback that gets called with an exception when any step triggers one.
-  "
-  ([config steps ctx on-sucess on-anomaly on-exception]
+  - `on-exception` Callback that gets called with an exception when any step triggers one."
+  ([config steps ctx on-success on-anomaly on-exception]
 
    (let [{:keys [anomaly?
                  log-exception
@@ -64,7 +63,7 @@
            :log-anomaly   log-anomaly
            :log-success   log-success
            :ctx           (merge (:initial-ctx config) ctx)
-           :on-success    on-sucess
+           :on-success    on-success
            :on-anomaly    on-anomaly
            :on-exception  on-exception
            :queue         (st/steps->queue steps)
