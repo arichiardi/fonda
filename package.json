@@ -28,7 +28,7 @@
   },
   "scripts": {
     "print-version": "echo $npm_package_version",
-    "repl": "yarn shadow-cljs watch lib",
+    "repl": "./scripts/repl",
     "watch": "yarn shadow-cljs watch lib",
     "build": "yarn shadow-cljs release lib",
     "test": "yarn shadow-cljs release test && node dist/test.js",
