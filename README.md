@@ -39,12 +39,11 @@ This example illustrates `fonda`'s basic mechanics:
  (fn [exception]
    (handle-exception exception)))
 ```
+*HINT*: The parameter order makes it easy to partially apply `execute` for leaner call sites.
+
+---
 
 Fonda sequentially executes a series of [steps](#trivia), one after the other, augmenting a context map. The steps can be synchronous or asyncronous. After the steps are run, the termination callbacks will be executed.
-
----
-*HINT*: The parameter order makes it easy to partially apply `execute` for leaner call sites.
----
 
 If a `js/Error`, an exception in `fonda` parlance, is thrown it will be automatically caught and the chain short circuits. Then the following things happen in order:
 
