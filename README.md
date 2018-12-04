@@ -178,10 +178,11 @@ The **log map** is a record that contains:
 
 ## Trivia
 
-The name fonda got inspired by Jane Fonda's step fitness programs.
+The name got inspired by Jane Fonda's step very successful fitness programs.
+
 ![](https://img.buzzfeed.com/buzzfeed-static/static/enhanced/webdr03/2013/8/15/10/anigif_enhanced-buzz-31474-1376578012-1.gif?downsize=700:*&output-format=auto&output-quality=auto)
 
-As with the fitness program, fonda consist of well-curated steps.
+As with the fitness program, `fonda` consist of well-curated 🚶‍♀️ steps 🚶‍♂️.
 
 ## Contributing
 
