@@ -29,7 +29,9 @@ rm -v "$output_file"
 set -e
 
 shadow_cmd="$shadow_bin $shadow_subcmd $shadow_build $@"
-echo "Executing \"$shadow_cmd\"..."
+shadow_cmd=$(echo "$shadow_cmd" | sed -e 's/[[:space:]]*$//')
+
+echo "[repl] \"$shadow_cmd\""
 $shadow_cmd &
 
 # active loop waiting for the js file to appear
@@ -44,8 +46,8 @@ while [ ! -f "$output_file" ]; do
 done
 
 node_cmd="$node_bin $node_opts"
-echo "The shadow-cljs REPL is up."
-echo "Executing \"$node_cmd\"..."
+echo "[repl] Shadow-cljs is up"
+echo "[repl] Execute \"$node_cmd\""
 
 $node_cmd
 
