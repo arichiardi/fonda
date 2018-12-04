@@ -20,7 +20,7 @@ shadow_subcmd="watch"
 node_bin=$(which node)
 node_opts="--inspect $output_file"
 
-function cleanup {
+function do_cleanup {
   pkill $(cat "$shadow_pid_file");
 }
 
