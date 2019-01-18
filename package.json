@@ -1,6 +1,6 @@
 {
   "name": "@ep-npm/fonda",
-  "version": "0.1.8-SNAPSHOT",
+  "version": "0.1.2",
   "description": "An async pipeline approach to functional core - imperative shell.",
   "license": "Unlicense",
   "author": "Elastic Path Software",
