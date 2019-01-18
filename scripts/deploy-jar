@@ -1,0 +1,43 @@
+#!/usr/bin/env bash
+
+set -euo pipefail
+
+do_usage() {
+    echo -n
+    echo
+    echo "Deploy the jar to Clojars."
+    echo
+    echo "It requires mvn."
+    echo
+    echo "Usage: $0 -j <jar-path>"
+    echo
+    echo "Options:"
+    echo "  -h --help                 Show this screen."
+    echo "  -j --jar-path=<path>      The path to the jar file."
+    exit 1
+}
+
+jar_path=
+
+set +e
+TEMP=$(getopt -o h:j: --long help,jar-path: -n "$(basename $0)" -- "$@")
+set -e
+eval set -- "$TEMP"
+
+# extract options and their arguments into variables.
+while true ; do
+    case "$1" in
+        -j|--jar-path) jar_path="$2" ; shift 2 ;;
+        -h|--help) shift ; do_usage ; break ;;
+        --) shift ; break ;;
+        *) do_usage ; exit 1 ;;
+    esac
+done
+
+# sanity checks
+# set defaults from env var if present (note that arguments win)
+set +u
+[ -z "$jar_path" ] && do_usage
+set -u
+
+clojure -A:deploy -m deps-deploy.deps-deploy deploy "$jar_path"

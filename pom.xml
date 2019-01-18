@@ -59,4 +59,11 @@
       <url>https://clojars.org/repo</url>
     </repository>
   </distributionManagement>
+<dependencies>
+    <dependency>
+      <groupId>org.clojure</groupId>
+      <artifactId>clojure</artifactId>
+      <version>1.10.0</version>
+    </dependency>
+  </dependencies>
 </project>
