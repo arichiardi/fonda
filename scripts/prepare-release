@@ -61,7 +61,9 @@ tag_with_version=$tag_prefix$version
 echo "Set package.json version to $version"
 yarn version --new-version "$version" --no-git-tag-version
 
-echo "Commit and tag $tag_with_version"
-git add project.clj pom.xml package.json
-git commit -m "Release version $version"
-git tag -sa --message "Release version $version" "$tag_with_version"
+if [[ ! "yes" = "$wants_snapshot" ]] ; then
+    echo "Commit and tag $tag_with_version"
+    git add project.clj pom.xml package.json
+    git commit -m "Release version $version"
+    git tag -sa --message "Release version $version" "$tag_with_version"
+fi
