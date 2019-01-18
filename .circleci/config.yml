@@ -47,25 +47,6 @@ save-cache: &save-cache
 
 
 jobs:
-  publish-snapshot:
-    <<: *defaults
-    environment:
-      PUBLISH_SNAPSHOT: true
-    steps:
-      - checkout
-      - restore_cache:
-          <<: *restore-cache
-      - run:
-          <<: *run-install-yarn
-      - run:
-          <<: *run-install-clojure
-      - run:
-          command: lein deploy clojars
-          name: deploy
-
-      - save-cache:
-          <<: *save-cache
-
   test:
     <<: *defaults
     steps:
@@ -83,16 +64,9 @@ jobs:
 
 workflows:
   version: 2
-  test-and-publish:
+  test:
     jobs:
       - test:
           filters:  # required since `deploy` has tag filters AND requires `build`
             tags:
               only: /.*/
-      - publish-snapshot:
-          requires:
-            - test
-          filters:
-            branches:
-              only:
-                - master
