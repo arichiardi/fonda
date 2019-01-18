@@ -1,25 +1,4 @@
-(defn throw-if-non-zero
-  [process]
-  (let [exit-code (.waitFor process)]
-    (if-not (= 0 exit-code)
-      (throw (ex-info (str "Process returned non-zero exit code (" exit-code ")")
-                      {:exit-code exit-code}))
-      process)))
-
-(defn publish-shapshot?
-  []
-  (= "true" (System/getenv "PUBLISH_SNAPSHOT")))
-
-(def +version+
-  (-> (ProcessBuilder. (into ["scripts/get-version.sh"]
-                             (when publish-shapshot? ["--snapshot"])))
-      (.start)
-      (throw-if-non-zero)
-      (.getInputStream)
-      slurp
-      (clojure.string/trim-newline)))
-
-(defproject com.elasticpath/fonda +version+
+(defproject com.elasticpath/fonda "PLACEHOLDER"
   :url "https://github.com/elasticpath/fonda"
   :description "An async pipeline approach to functional core - imperative shell."
   :license {:name "Apache License"

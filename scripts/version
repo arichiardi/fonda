@@ -1,0 +1,79 @@
+#!/bin/bash
+#
+# Compute the next release version.
+#
+# The revision number is calculated reproducibly: this number will always be
+# the number of commits fro the latest tag.  This is useful for reproducible
+# version numbers that do not rely on semantic versioning.
+
+set -euo pipefail
+
+do_usage() {
+    echo -n
+    echo
+    echo "Compute the next release version."
+    echo
+    echo "It merges the revision number with the content of the VERSION file."
+    echo "The VERSION file should contain a COMPUTED_REVISION string."
+    echo
+    echo "Usage: $0 -n <tag-name> -p <prefix-name>"
+    echo
+    echo "Options:"
+    echo "  -h --help                 Show this screen."
+    echo "  -s --snapshot             Append -SNAPSHOT to the version."
+    echo "  -p --tag-prefix=<prefix>  The git tag prefix. Default is \"v\"."
+    exit 1
+}
+
+project_name=
+
+set +e
+TEMP=$(getopt -o h:sp: --long help,snapshot,tag-prefix: -n "$(basename $0)" -- "$@")
+set -e
+eval set -- "$TEMP"
+
+version_snapshot=
+
+# extract options and their arguments into variables.
+while true ; do
+    case "$1" in
+        -s|--snapshot) version_snapshot=-SNAPSHOT ; shift ;;
+        -p|--tag-prefix) tag_prefix="$2" ; shift 2 ;;
+        -h|--help) shift ; do_usage ; break ;;
+        --) shift ; break ;;
+        *) do_usage ; exit 1 ;;
+    esac
+done
+
+tag_prefix="${tag_prefix:-\v}"
+
+# The command `git describe --match v0.0` will return a string like
+#
+# v0.0-856-g329708b
+#
+# where 856 is the number of commits since the v0.0 tag. We use that as
+# revision.
+tag_name="$tag_prefix"
+tag_regex="$tag_name*"
+
+set +e
+revision=$(git --no-replace-objects describe --match "$tag_regex" 2> /dev/null)
+set -e
+
+if [ -n "$revision" ]; then
+    # trim everything before @
+    revision=${revision##*@}
+
+    # Extract the commit count from the revision
+    revision_regex="[0-9]*\.[0-9]*-([0-9]*)-.*"
+    if [[ $revision =~ $revision_regex ]]; then
+        revision="${BASH_REMATCH[1]}"
+    fi
+else
+    revision=$(git rev-list --count HEAD)
+fi
+
+version_template=$(cat VERSION)
+version=${version_template/COMPUTED_REVISION/$revision}$version_snapshot
+
+echo "$version"

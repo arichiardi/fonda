@@ -32,7 +32,9 @@
     "watch": "yarn shadow-cljs watch lib",
     "build": "yarn shadow-cljs release lib",
     "test": "yarn shadow-cljs release test && node dist/test.js",
-    "test:watch": "yarn shadow-cljs watch test"
+    "test:watch": "yarn shadow-cljs watch test",
+    "deploy:release": "make jar && scripts/prepare-release && scripts/deploy-jar -j ./fonda.jar",
+    "deploy:snapshot": "make jar && scripts/prepare-release --snapshot -s && scripts/deploy-jar -j fonda.jar"
   },
   "devDependencies": {
     "shadow-cljs": "2.7.4"
