@@ -1,4 +1,4 @@
-(defproject com.elasticpath/fonda "PLACEHOLDER"
+(defproject com.elasticpath/fonda "0.1.4-SNAPSHOT"
   :url "https://github.com/elasticpath/fonda"
   :description "An async pipeline approach to functional core - imperative shell."
   :license {:name "Apache License"
