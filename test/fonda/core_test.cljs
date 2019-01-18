@@ -25,7 +25,7 @@
 (deftest execute-empty-chain-test-1
   (testing "Passing empty configuration with empty steps should call on-success with a nil value."
     (async done
-      (fonda/execute {} [] {}
+      (fonda/execute {} []
                      (fn [res]
                        (is (= {} res)) (done))
                      anomaly-cb-throw
@@ -33,10 +33,11 @@
 
 (deftest execute-empty-chain-test-2
   (testing "Passing a context on the configuration with empty steps should call on-success with that context."
-    (let [ctx {:initial "value"}]
+    (let [initial {:foo :bar}]
       (async done
-        (fonda/execute {} [] ctx
-                       (fn [res] (is (= ctx res)) (done))
+        (fonda/execute {:initial-ctx initial}
+                       []
+                       (fn [res] (is (= initial res)) (done))
                        anomaly-cb-throw
                        exception-cb-throw)))))
 
@@ -49,7 +50,8 @@
             processor {:path      processor-path
                        :name      "processor name"
                        :processor (fn [_] processor-res)}]
-        (fonda/execute {} [processor] {}
+        (fonda/execute {}
+                       [processor]
                        (fn [res] (is (= processor-res (get-in res processor-path))) (done))
                        anomaly-cb-throw
                        exception-cb-throw)))))
@@ -57,23 +59,24 @@
 (deftest one-successful-sync-tap-doesnt-augment-context-test
   (testing "Passing one synchronous tap should call on-success with the initial context"
     (async done
-      (let [initial-context {:initial "context"}
+      (let [initial {:foo :bar}
             tap {:name "tap1"
                  :tap  (fn [_] :whatever-value)}]
-        (fonda/execute {} [tap] initial-context
-                       (fn [res] (is (= initial-context res)) (done))
+        (fonda/execute {:initial-ctx initial} [tap]
+                       (fn [res] (is (= initial res)) (done))
                        anomaly-cb-throw
                        exception-cb-throw)))))
 
 (deftest one-successful-sync-tap-is-passed-the-context
   (testing "Passing one synchronous tap should call on-success with the initial context"
     (async done
-      (let [initial-context {:initial "context"}
+      (let [initial {:foo :bar}
             tap {:name "tap1"
                  :tap  (fn [ctx]
-                         (is (= initial-context ctx)) (done)
+                         (is (= initial ctx)) (done)
                          :whatever-value)}]
-        (fonda/execute {} [tap] initial-context
+        (fonda/execute {:initial-ctx initial}
+                       [tap]
                        (fn [_])
                        anomaly-cb-throw
                        exception-cb-throw)))))
@@ -87,7 +90,8 @@
             processor {:path      processor-path
                        :name      "processor name"
                        :processor (fn [_] (js/Promise.resolve processor-res))}]
-        (fonda/execute {} [processor] {}
+        (fonda/execute {}
+                       [processor]
                        (fn [res] (is (= processor-res (get-in res processor-path))) (done))
                        anomaly-cb-throw
                        exception-cb-throw)))))
@@ -99,7 +103,8 @@
             processor {:path      [:processor-path]
                        :name      "processor name"
                        :processor (fn [_] processor-res)}]
-        (fonda/execute {} [processor] {}
+        (fonda/execute {}
+                       [processor]
                        (fn [_])
                        (fn [anomaly] (is (= processor-res anomaly)) (done))
                        exception-cb-throw)))))
@@ -111,7 +116,8 @@
             tap {:path [:processor-path]
                  :name "processor name"
                  :tap  (fn [_] tap-res)}]
-        (fonda/execute {} [tap] {}
+        (fonda/execute {}
+                       [tap]
                        success-cb-throw
                        (fn [anomaly] (is (= tap-res anomaly)) (done))
                        exception-cb-throw)))))
@@ -126,7 +132,7 @@
             log-anomaly (fn [{:keys [anomaly]}]
                           (is (= processor-res anomaly)) (done))]
         (fonda/execute {:log-anomaly log-anomaly}
-                       [processor] {}
+                       [processor]
                        success-cb-throw
                        (fn [_])
                        exception-cb-throw)))))
@@ -138,7 +144,8 @@
             processor {:path      [:processor-path]
                        :name      "processor name"
                        :processor (fn [_] (js/Promise.resolve processor-res))}]
-        (fonda/execute {} [processor] {}
+        (fonda/execute {}
+                       [processor]
                        success-cb-throw
                        (fn [anomaly] (is (= processor-res anomaly)) (done))
                        exception-cb-throw)))))
@@ -153,7 +160,7 @@
             log-anomaly (fn [{:keys [anomaly]}]
                           (is (= processor-res anomaly)) (done))]
         (fonda/execute {:log-anomaly log-anomaly}
-                       [processor] {}
+                       [processor]
                        success-cb-throw
                        (fn [_])
                        exception-cb-throw)))))
@@ -165,7 +172,8 @@
             processor {:path      [:processor-path]
                        :name      "processor name"
                        :processor (fn [_] (throw processor-res))}]
-        (fonda/execute {} [processor] {}
+        (fonda/execute {}
+                       [processor]
                        success-cb-throw
                        anomaly-cb-throw
                        (fn [err] (is (= processor-res err)) (done)))))))
@@ -176,7 +184,8 @@
       (let [tap-res (js/Error "Bad exception")
             tap {:name "processor name"
                  :tap  (fn [_] (throw tap-res))}]
-        (fonda/execute {} [tap] {}
+        (fonda/execute {}
+                       [tap]
                        success-cb-throw
                        anomaly-cb-throw
                        (fn [err] (is (= tap-res err)) (done)))))))
@@ -191,7 +200,7 @@
             log-exception (fn [{:keys [exception]}]
                             (is (= processor-res exception)) (done))]
         (fonda/execute {:log-exception log-exception}
-                       [processor] {}
+                       [processor]
                        success-cb-throw
                        anomaly-cb-throw
                        (fn [_]))))))
@@ -204,7 +213,8 @@
             processor {:path      [:processor-path]
                        :name      "processor name"
                        :processor (fn [_] (js/Promise.reject processor-res))}]
-        (fonda/execute {} [processor] {}
+        (fonda/execute {}
+                       [processor]
                        success-cb-throw
                        anomaly-cb-throw
                        (fn [err] (is (= processor-res err)) (done)))))))
@@ -219,7 +229,7 @@
             log-exception (fn [{:keys [exception]}]
                             (is (= processor-res exception)) (done))]
         (fonda/execute {:log-exception log-exception}
-                       [processor] {}
+                       [processor]
                        success-cb-throw
                        anomaly-cb-throw
                        (fn [_]))))))
@@ -231,7 +241,7 @@
             step2-fn inc]
         (fonda/execute {}
                        [{:path [:step1] :name "step1" :processor (fn [_] step1-val)}
-                        {:path [:step2] :name "step2" :processor (fn [{:keys [step1]}] (step2-fn step1))}] {}
+                        {:path [:step2] :name "step2" :processor (fn [{:keys [step1]}] (step2-fn step1))}]
                        (fn [res]
                          (is (= res {:step1 step1-val :step2 (step2-fn step1-val)})) (done))
                        anomaly-cb-throw
@@ -249,7 +259,7 @@
                         {:path      [:step2]
                          :name      "step2"
                          :processor (fn [{:keys [step1]}]
-                                      (js/Promise.resolve (step2-fn step1)))}] {}
+                                      (js/Promise.resolve (step2-fn step1)))}]
                        (fn [res]
                          (is (= res {:step1 step1-val :step2 (step2-fn step1-val)})) (done))
                        anomaly-cb-throw
@@ -273,11 +283,11 @@
                         {:path      [:step3]
                          :name      "step3"
                          :processor (fn [{:keys [step2]}]
-                                      (step3-fn step2))}] {}
+                                      (step3-fn step2))}]
                        (fn [res]
                          (is (= res {:step1 step1-val
-                                             :step2 (step2-fn step1-val)
-                                             :step3 (-> step1-val (step2-fn) (step3-fn))})) (done))
+                                     :step2 (step2-fn step1-val)
+                                     :step3 (-> step1-val (step2-fn) (step3-fn))})) (done))
                        anomaly-cb-throw
                        exception-cb-throw)))))
 
@@ -299,7 +309,6 @@
                         {:path      [:step3]
                          :name      "step3"
                          :processor (fn [_] 1)}]
-                       {}
                        success-cb-throw
                        (fn [anomaly] (is (= unsuccessful-res anomaly)) (done))
                        exception-cb-throw)))))
@@ -323,7 +332,6 @@
                         {:path      [:step3]
                          :name      "step3"
                          :processor (fn [_] (swap! step3-counter inc))}]
-                       {}
                        success-cb-throw
                        (fn [anomaly] (is (and (= 1 @step1-counter)
                                               (= 0 @step3-counter))) (done))
@@ -346,7 +354,6 @@
                         {:path      [:step3]
                          :name      "step3"
                          :processor (fn [_] 1)}]
-                       {}
                        success-cb-throw
                        anomaly-cb-throw
                        (fn [err] (is (= exception err)) (done)))))))
@@ -370,7 +377,6 @@
                         {:path      [:step3]
                          :name      "step1"
                          :processor (fn [_] (swap! step3-counter inc))}]
-                       {}
                        success-cb-throw
                        anomaly-cb-throw
                        (fn [err] (is (and (= 1 @step1-counter)
@@ -394,7 +400,6 @@
                         {:path      [:step3]
                          :name      "step1"
                          :processor (fn [_] (swap! step3-counter inc))}]
-                       {}
                        success-cb-throw
                        exception-cb-throw
                        (fn [err] (is (and (= 1 @step1-counter)
