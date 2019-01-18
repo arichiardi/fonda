@@ -1,0 +1,62 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<project xmlns="http://maven.apache.org/POM/4.0.0" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 http://maven.apache.org/xsd/maven-4.0.0.xsd">
+  <modelVersion>4.0.0</modelVersion>
+
+  <groupId>com.elasticpath</groupId>
+  <artifactId>fonda</artifactId>
+  <name>fonda</name>
+  <version>PLACEHOLDER</version>
+  <description>An async pipeline approach to functional core - imperative shell.</description>
+
+  <url>https://github.com/elasticpath/fonda</url>
+  <inceptionYear>2018</inceptionYear>
+  <scm>
+    <url>https://github.com/elasticpath/fonda</url>
+  </scm>
+
+  <licenses>
+    <license>
+      <name>Apache License, Version 2.0</name>
+      <url>http://www.apache.org/licenses/LICENSE-2.0</url>
+      <distribution>repo</distribution>
+    </license>
+  </licenses>
+
+  <developers>
+    <developer>
+      <name>Andrea Richiardi</name>
+      <email>a.richiardi.work@gmail.com</email>
+      <organization>Elastic Path</organization>
+      <organizationUrl>http://www.elasticpath.com</organizationUrl>
+    </developer>
+    <developer>
+      <name>David Cerezo Iñigo</name>
+      <email>davidcerezoinigo@gmail.com</email>
+      <organization>Elastic Path</organization>
+      <organizationUrl>http://www.elasticpath.com</organizationUrl>
+    </developer>
+  </developers>
+
+  <organization>
+    <name>Elastic Path</name>
+    <url>http://www.elasticpath.com</url>
+  </organization>
+
+  <build>
+    <sourceDirectory>src</sourceDirectory>
+  </build>
+
+  <repositories>
+    <repository>
+      <id>clojars</id>
+      <url>https://repo.clojars.org/</url>
+    </repository>
+  </repositories>
+  <distributionManagement>
+    <repository>
+      <id>clojars</id>
+      <name>Clojars repository</name>
+      <url>https://clojars.org/repo</url>
+    </repository>
+  </distributionManagement>
+</project>
