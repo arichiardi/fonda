@@ -19,7 +19,6 @@
 (s/fdef execute
   :args (s/cat :config ::config
                :steps ::steps
-               :context ::r/ctx
                :on-success ::r/on-success
                :on-anomaly ::r/on-anomaly
                :on-exception ::r/on-exception))
@@ -33,7 +32,7 @@
       - [opt] log-exception A function gets called with the FondaContext record when there is an exception.
       - [opt] log-anomaly   A function that gets called with the FondaContext record when a step returns an anomaly.
       - [opt] log-success   A function that gets called with the FondaContext record after all steps succeeded.
-      - [opt] initial-ctx   The context data initializes the context. Must be a map.
+      - [opt] initial-ctx   The data that initializes the context. Must be a map.
 
   - `steps`: Each item on the `steps` collection must be either a Tap, or a Processor.
 
@@ -46,11 +45,10 @@
        - path:     Path where to assoc the result of the processor
        - name:     The name of the step
 
-  - `ctx`          The runtime context, merged to the initial context. Must be a map.
   - `on-success`   Callback that gets called with the context if all the steps succeeded.
   - `on-anomaly`   Callback that gets called with an anomaly when any step returns one.
   - `on-exception` Callback that gets called with an exception when any step triggers one."
-  ([config steps ctx on-success on-anomaly on-exception]
+  ([config steps on-success on-anomaly on-exception]
 
    (let [{:keys [anomaly?
                  log-exception
@@ -62,7 +60,7 @@
            :log-exception log-exception
            :log-anomaly   log-anomaly
            :log-success   log-success
-           :ctx           (merge (:initial-ctx config) ctx)
+           :ctx           (or (:initial-ctx config) {})
            :on-success    on-success
            :on-anomaly    on-anomaly
            :on-exception  on-exception

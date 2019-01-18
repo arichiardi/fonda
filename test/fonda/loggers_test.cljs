@@ -35,9 +35,9 @@
           log-anomaly (fn [{:keys [stack]}]
                         (is (= (:name processor) (:name (last stack)))) (done))]
       (fonda/execute {:log-anomaly log-anomaly}
-                     [processor] {}
+                     [processor]
                      success-cb-throw
-                     (fn [_])                               ;; Anomaly callbacks are tested elsewhere
+                     (fn [_]) ;; Anomaly callbacks are tested elsewhere
                      exception-cb-throw))))
 
 (deftest log-exception-gets-steps-stack-test
@@ -48,10 +48,10 @@
           log-exception (fn [{:keys [stack]}]
                           (is (= (:name processor) (:name (last stack)))) (done))]
       (fonda/execute {:log-exception log-exception}
-                     [processor] {}
+                     [processor]
                      success-cb-throw
                      anomaly-cb-throw
-                     (fn [_])))))                           ;; Exception callbacks are tested elsewhere
+                     (fn [_]))))) ;; Exception callbacks are tested elsewhere
 
 (deftest log-success-gets-steps-stack-test
   (async done
@@ -61,8 +61,8 @@
           log-success (fn [{:keys [stack]}]
                         (is (= (:name processor) (:name (last stack)))) (done))]
       (fonda/execute {:log-success log-success}
-                     [processor] {}
-                     (fn [_])                               ;; Success callbacks are tested elsewhere
+                     [processor]
+                     (fn [_]) ;; Success callbacks are tested elsewhere
                      anomaly-cb-throw
                      exception-cb-throw))))
 
@@ -82,7 +82,7 @@
                        (is (true? @log-success-run?))
                        (done))]
       (fonda/execute {:log-success log-success}
-                     [processor] {}
+                     [processor]
                      success-cb
                      anomaly-cb-throw
                      exception-cb-throw))))
@@ -103,7 +103,7 @@
                        (is (true? @log-anomaly-run?))
                        (done))]
       (fonda/execute {:log-anomaly log-anomaly}
-                     [processor] {}
+                     [processor]
                      success-cb-throw
                      anomaly-cb
                      exception-cb-throw))))
@@ -124,7 +124,7 @@
                          (is (true? @log-exception-run?))
                          (done))]
       (fonda/execute {:log-exception log-exception}
-                     [processor] {}
+                     [processor]
                      success-cb-throw
                      anomaly-cb-throw
                      exception-cb))))
@@ -139,8 +139,8 @@
                         (is (= processor (select-keys (last stack) [:path :name :processor])))
                         (done))]
       (fonda/execute {:log-success log-success}
-                     [processor] {}
-                     (fn [_])                               ;; ;; Success callbacks are tested elsewhere
+                     [processor]
+                     (fn [_]) ;; Success callbacks are tested elsewhere
                      anomaly-cb-throw
                      exception-cb-throw))))
 
@@ -155,9 +155,9 @@
                         (is (= anomaly returned-anomaly))
                         (done))]
       (fonda/execute {:log-anomaly log-anomaly}
-                     [processor] {}
+                     [processor]
                      success-cb-throw
-                     (fn [_])                               ;; Anomaly callbacks are tested elsewhere
+                     (fn [_]) ;; Anomaly callbacks are tested elsewhere
                      exception-cb-throw))))
 
 (deftest log-exception-gets-stack-and-exception-test
@@ -171,7 +171,7 @@
                           (is (= exception thrown-exception))
                           (done))]
       (fonda/execute {:log-exception log-exception}
-                     [processor] {}
+                     [processor]
                      success-cb-throw
                      anomaly-cb-throw
-                     (fn [_])))))                           ;; Exception callbacks are tested elsewhere
+                     (fn [_]))))) ;; Exception callbacks are tested elsewhere

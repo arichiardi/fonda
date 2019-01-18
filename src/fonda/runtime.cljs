@@ -8,7 +8,6 @@
 (s/def ::log-anomaly (s/nilable fn?))
 (s/def ::log-success (s/nilable fn?))
 (s/def ::initial-ctx map?) ;; part of the config
-(s/def ::ctx map?)
 (s/def ::exception (s/nilable #(instance? js/Error %)))
 (s/def ::anomaly (s/nilable any?))
 (s/def ::on-success fn?)
