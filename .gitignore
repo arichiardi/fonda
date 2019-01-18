@@ -1,4 +1,4 @@
-*jar
+*.jar
 **/lib/
 **/classes/
 **/out/
@@ -6,9 +6,7 @@
 **/target/
 .lein*
 **/node_modules
-.serverless
 **/.shadow-cljs/
-cp
 .dir-locals.el
 *.log
 .nrepl-port
@@ -17,7 +15,6 @@ cp
 .nrepl-history
 .projectile
 **/.cpcache
-**/.cljs*
 package-lock.json
 *.iml
 .idea
