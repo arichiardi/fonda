@@ -4,4 +4,9 @@
                                 org.clojure/clojurescript {:mvn/version "1.10.439"}
                                 expound                   {:mvn/version "0.7.1"}
                                 org.clojure/test.check    {:mvn/version "0.10.0-alpha3" :exclusions [org.clojure/clojure]}
-                                orchestra                 {:mvn/version "2018.11.07-1"}}}}}
+                                orchestra                 {:mvn/version "2018.11.07-1"}}}
+           :pack {:extra-deps {pack/pack.alpha {:git/url "https://github.com/juxt/pack.alpha.git"
+                                                :sha "90a84a01c365fdac224bf4eef6e9c8e1d018a29e"}}}
+           :deploy {:extra-deps {deps-deploy {:git/url "https://github.com/slipset/deps-deploy.git"
+                                              :sha "388481b808fc7b1a27951ad2725cac0ba10adb6b"}}
+                    :main-opts ["-m" "deps-deploy.deps-deploy"]}}}
