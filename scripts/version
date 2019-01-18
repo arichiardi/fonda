@@ -45,7 +45,7 @@ while true ; do
     esac
 done
 
-tag_prefix="${tag_prefix:-\v}"
+tag_prefix="${tag_prefix:-v}"
 
 # The command `git describe --match v0.0` will return a string like
 #
@@ -53,8 +53,7 @@ tag_prefix="${tag_prefix:-\v}"
 #
 # where 856 is the number of commits since the v0.0 tag. We use that as
 # revision.
-tag_name="$tag_prefix"
-tag_regex="$tag_name*"
+tag_regex="$tag_prefix*"
 
 set +e
 revision=$(git --no-replace-objects describe --match "$tag_regex" 2> /dev/null)
@@ -65,7 +64,7 @@ if [ -n "$revision" ]; then
     revision=${revision##*@}
 
     # Extract the commit count from the revision
-    revision_regex="[0-9]*\.[0-9]*-([0-9]*)-.*"
+    revision_regex="[0-9]*\.[0-9]*.*-([0-9]*)-.*"
     if [[ $revision =~ $revision_regex ]]; then
         revision="${BASH_REMATCH[1]}"
     fi
