@@ -1,3 +1,4 @@
+extra/
 *.jar
 **/lib/
 **/classes/
