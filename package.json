@@ -37,7 +37,7 @@
     "deploy:snapshot": "make clean && make jar && scripts/prepare-release --snapshot -s && scripts/deploy-jar -j fonda.jar"
   },
   "devDependencies": {
-    "shadow-cljs": "2.7.4"
+    "shadow-cljs": "2.8.15"
   },
   "dependencies": {}
 }

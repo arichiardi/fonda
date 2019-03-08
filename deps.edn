@@ -1,10 +1,10 @@
 {:paths   ["src"]
  :aliases {:test {:extra-paths ["test"]}
-           :dev  {:extra-deps  {org.clojure/clojure       {:mvn/version "1.10.0-beta6"}
-                                org.clojure/clojurescript {:mvn/version "1.10.439"}
-                                expound                   {:mvn/version "0.7.1"}
+           :dev  {:extra-deps  {org.clojure/clojure       {:mvn/version "1.10.0"}
+                                org.clojure/clojurescript {:mvn/version "1.10.520"}
+                                expound                   {:mvn/version "0.7.2"}
                                 org.clojure/test.check    {:mvn/version "0.10.0-alpha3" :exclusions [org.clojure/clojure]}
-                                orchestra                 {:mvn/version "2018.11.07-1"}}}
+                                orchestra                 {:mvn/version "2018.12.06-2"}}}
            :pack {:extra-deps {pack/pack.alpha {:git/url "https://github.com/juxt/pack.alpha.git"
                                                 :sha "90a84a01c365fdac224bf4eef6e9c8e1d018a29e"}}}
            :deploy {:extra-deps {deps-deploy {:git/url "https://github.com/slipset/deps-deploy.git"
