@@ -1,5 +1,5 @@
 (ns fonda.loggers-test
-  (:require [cljs.test :refer-macros [deftest is testing run-tests use-fixtures async]]
+  (:require [cljs.test :refer-macros [deftest is testing async]]
             [orchestra-cljs.spec.test :as orchestra]
             [fonda.core :as fonda]
             [fonda.anomaly]))

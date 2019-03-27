@@ -1,5 +1,6 @@
 (ns fonda.step
-  (:require [cljs.spec.alpha :as s]))
+  (:require [cljs.spec.alpha :as s]
+            [fonda.meta :as meta]))
 
 ;; Common for all steps
 (s/def ::name (s/or :k keyword? :s string?))
@@ -7,19 +8,15 @@
   (s/keys :req-un [::name]))
 
 ;; Tap step
-(s/def ::tap fn?)
+(s/def ::tap (s/or :function fn? :qualified-keyword qualified-keyword?))
 (s/def ::tap-step
-  (s/merge
-    ::step-common
-    (s/keys :req-un [::tap])))
+  (s/merge ::step-common (s/keys :req-un [::tap])))
 
 ;; Processor step
 (s/def ::path vector?)
-(s/def ::processor fn?)
+(s/def ::processor (s/or :function fn? :qualified-keyword qualified-keyword?))
 (s/def ::processor-step
-  (s/merge
-    ::step-common
-    (s/keys :req-un [::processor ::path])))
+  (s/merge ::step-common (s/keys :req-un [::processor ::path])))
 
 (s/def ::step
   (s/or :tap-step ::tap-step
@@ -42,11 +39,18 @@
    ;; Path were to attach the processor result on the context
    path])
 
-(defn steps->queue [steps]
-  (->> steps
-       (mapv (fn [{:as m :keys [tap processor]}]
-               (cond
-                 tap (map->Tap m)
-                 processor (map->Processor m)
-                 :else (throw (ex-info "The step doesn't have tap neither resolve" m)))))
-       (into #queue [])))
+(defn resolve-function
+  [fn-or-keyword]
+  (if (qualified-keyword? fn-or-keyword)
+    (meta/kw->fn fn-or-keyword)
+    fn-or-keyword))
+
+(defn step->record
+  [{:keys [tap processor] :as step}]
+  (cond
+    tap (map->Tap (update step :tap resolve-function))
+    processor (map->Processor (update step :processor resolve-function))))
+
+(def ^{:doc "Step transducer."}
+  xf
+  (map step->record))

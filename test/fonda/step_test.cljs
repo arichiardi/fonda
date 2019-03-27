@@ -1,19 +1,18 @@
 (ns fonda.step-test
-  (:require [cljs.test :refer-macros [deftest is testing run-tests use-fixtures async]]
+  (:require [cljs.test :refer-macros [deftest is testing]]
             [orchestra-cljs.spec.test :as orchestra]
             [fonda.step :as step]))
 
 (orchestra/instrument)
 
-(deftest empty-steps-test
-  (is (empty? (step/steps->queue []))))
+(deftest processor-step-test
+  (let [step (step/step->record {:processor :cljs.core/inc
+                                 :path [:test]})]
+    (is (record? step) "the step should be a record")
+    (is (fn? (:processor step)) "the :processor key should become a function")))
 
-(deftest steps-with-no-taps-test
-  (let [steps [{:processor      identity
-                :name           "test1"
-                :path           [:test1]}
-
-               {:processor      identity
-                :name           "test2"
-                :path           [:test2]}]]
-    (is (= steps (->> (step/steps->queue steps) (mapv #(into {} %)))))))
+(deftest tap-step-test
+  (let [step (step/step->record {:tap :cljs.core/println
+                                 :path [:test]})]
+    (is (record? step) "the step should be a record")
+    (is (fn? (:tap step)) "the :tap key should become a function")))
