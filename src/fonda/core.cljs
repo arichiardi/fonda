@@ -64,7 +64,7 @@
            :on-success    on-success
            :on-anomaly    on-anomaly
            :on-exception  on-exception
-           :queue         (st/steps->queue steps)
+           :queue         (into #queue [] st/xf steps)
            :stack         []})
          (e/execute-steps)
          (e/execute-loggers)

@@ -73,8 +73,6 @@
 ;;;;;;;;;;;;
 ;; PUBLIC ;;
 ;;;;;;;;;;;;
-(s/fdef execute-taps
-  :args (s/cat :fonda-ctx ::r/fonda-context))
 
 (defn execute-loggers
   "Executes one of the global tap functions.
