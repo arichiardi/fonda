@@ -3,9 +3,9 @@
             [fonda.meta :as meta]))
 
 ;; Common for all steps
-(s/def ::name (s/or :k keyword? :s string?))
+(s/def ::name string?)
 (s/def ::step-common
-  (s/keys :req-un [::name]))
+  (s/keys :opt-un [::name]))
 
 ;; Tap step
 (s/def ::tap (s/or :function fn? :qualified-keyword qualified-keyword?))

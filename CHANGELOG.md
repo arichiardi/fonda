@@ -9,7 +9,8 @@ and this project adheres to [Semantic Versioning](http://semver.org/spec/v2.0.0.
 
 ### Added
 
-- Resolve qualified keywords to step functions. [#32](https://github.com/elasticpath/fonda/pull/32).
+- Resolve qualified keywords to step functions. [#32](https://github.com/elasticpath/fonda/pull/32)
+- Make the name key for step optional and possibly a keyword. [#33](https://github.com/elasticpath/fonda/pull/33)
 
 ## [v0.2.1](https://github.com/elasticpath/fonda/compare/v0.0.2...v0.2.1) - 2018-02-12
 
