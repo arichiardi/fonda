@@ -17,3 +17,13 @@
 (s/def ::processor (s/or :function fn? :qualified-keyword qualified-keyword?))
 (s/def ::processor-step
   (s/merge ::step-common (s/keys :req-un [::processor ::path])))
+
+;; Injector step
+(s/def ::inject fn?)
+(s/def ::injector-step
+  (s/merge ::step-common (s/keys :req-un [::inject])))
+
+(s/def ::step
+  (s/or :tap-step ::tap-step
+        :processor-step ::processor-step
+        :injector-step ::injector-step))

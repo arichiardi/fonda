@@ -1,5 +1,5 @@
 (ns fonda.core
-  (:require [clojure.spec.alpha :as s]
+  (:require [fonda.anomaly]
             [fonda.execute :as e]
             [fonda.step :as st]))
 
