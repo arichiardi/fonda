@@ -1,7 +1,8 @@
 (ns fonda.step-test
   (:require [cljs.test :refer-macros [deftest is testing]]
-            [orchestra-cljs.spec.test :as orchestra]
-            [fonda.step :as step]))
+            [fonda.step :as step]
+            [fonda.step.specs]
+            [orchestra-cljs.spec.test :as orchestra]))
 
 (orchestra/instrument)
 
