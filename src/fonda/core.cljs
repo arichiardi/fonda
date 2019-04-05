@@ -1,27 +1,13 @@
 (ns fonda.core
-  (:require [fonda.anomaly]
+  (:require [clojure.spec.alpha :as s]
+            [fonda.anomaly]
             [fonda.execute :as e]
-            [fonda.runtime :as r]
-            [fonda.step :as st]
-            [cljs.spec.alpha :as s]))
-
-(s/def ::config
-  (s/keys :opt-un [::r/anomaly?
-                   ::r/log-exception
-                   ::r/log-anomaly
-                   ::r/initial-ctx]))
-
-(s/def ::steps (s/coll-of ::st/step))
+            [fonda.step :as st]))
 
 ;;;;;;;;;;;;;;;;;
 ;; Public API: ;;
 ;;;;;;;;;;;;;;;;;
-(s/fdef execute
-  :args (s/cat :config ::config
-               :steps ::steps
-               :on-success ::r/on-success
-               :on-anomaly ::r/on-anomaly
-               :on-exception ::r/on-exception))
+
 (defn execute
   "Sequentially executes the series of given `steps`.
 
@@ -49,13 +35,12 @@
   - `on-anomaly`   Callback that gets called with an anomaly when any step returns one.
   - `on-exception` Callback that gets called with an exception when any step triggers one."
   ([config steps on-success on-anomaly on-exception]
-
    (let [{:keys [anomaly?
                  log-exception
                  log-anomaly
                  log-success]} config]
 
-     (-> (r/map->FondaContext
+     (-> (e/map->FondaContext
           {:anomaly?      (or anomaly? fonda.anomaly/anomaly?)
            :log-exception log-exception
            :log-anomaly   log-anomaly

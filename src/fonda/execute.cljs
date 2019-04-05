@@ -1,37 +1,20 @@
 (ns fonda.execute
-  (:require [fonda.async :as a]
-            [fonda.runtime :as r]
-            [fonda.step :as st]
-            [cljs.spec.alpha :as s]))
+  (:require [clojure.spec.alpha :as s]
+            [fonda.async :as a]
+            [fonda.step :as st]))
 
 (def log-map-keys [:exception :anomaly :ctx :stack])
-
-(s/fdef assoc-tap-result
-  :args (s/cat :fonda-ctx ::r/fonda-context
-               :res any?))
 
 (defn assoc-tap-result [{:as fonda-ctx :keys [anomaly?]} res]
   (if (anomaly? res)
     (assoc fonda-ctx :anomaly res)
     fonda-ctx))
 
-
-
-(s/fdef assoc-processor-result
-  :args (s/cat :fonda-ctx ::r/fonda-context
-               :path ::st/path
-               :res any?))
-
 (defn assoc-processor-result
   [{:as fonda-ctx :keys [anomaly?]} path res]
   (if (anomaly? res)
     (assoc fonda-ctx :anomaly res)
     (assoc-in fonda-ctx (concat [:ctx] path) res)))
-
-
-(s/fdef try-step
-  :args (s/cat :fonda-ctx ::r/fonda-context
-               :step ::st/step))
 
 (defn- try-step
   "Tries running the given step (a tap step, or a processor step).
@@ -52,10 +35,6 @@
     (catch :default e
       (assoc fonda-ctx :exception e))))
 
-
-(s/fdef deliver-result
-  :args (s/cat :fonda-ctx ::r/fonda-context))
-
 (defn- deliver-result
   "Calls a callback depending on what is on the context.
   If there is an exception on the context, calls on-exception.
@@ -68,7 +47,6 @@
                    anomaly #(on-anomaly anomaly)
                    :else #(on-success ctx))]
       (cb))))
-
 
 ;;;;;;;;;;;;
 ;; PUBLIC ;;
@@ -90,11 +68,6 @@
       (when log-fn (log-fn (select-keys fonda-ctx log-map-keys)))
       fonda-ctx)))
 
-
-
-(s/fdef execute-steps
-  :args (s/cat :fonda-ctx ::r/fonda-context))
-
 (defn execute-steps
   "Sequentially runs each of the steps.
 
@@ -107,7 +80,44 @@
       (if (or (not step) exception anomaly)
         fonda-ctx
         (recur
-          (-> fonda-ctx
-              (assoc :queue (pop queue))
-              (assoc :stack (conj stack step))
-              (try-step step)))))))
+         (-> fonda-ctx
+             (assoc :queue (pop queue))
+             (assoc :stack (conj stack step))
+             (try-step step)))))))
+
+(defrecord FondaContext
+  [;; A function that gets a map and determines if it is an anomaly
+   anomaly?
+
+   ;; A function gets called with the fonda context when there is an exception
+   log-exception
+
+   ;; A function that gets called with the fonda context when a step returns an anomaly
+   log-anomaly
+
+   ;; A function that gets called with the fonda context after all steps succeeded
+   log-success
+
+   ;; The context data that gets passed to the step functions
+   ctx
+
+   ;; An exception thrown by a step
+   exception
+
+   ;; An anomaly returned by a step
+   anomaly
+
+   ;; Callback function that gets called with the context after all the steps succeeded
+   on-success
+
+   ;; Callback function that gets called with an exception that a step triggered
+   on-exception
+
+   ;; Callback function taht gets called with an anomaly that a step returned
+   on-anomaly
+
+   ;; The steps that haven't been already processed
+   queue
+
+   ;; The steps that have already been processed
+   stack])

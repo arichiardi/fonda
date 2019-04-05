@@ -1,8 +1,9 @@
 (ns fonda.loggers-test
   (:require [cljs.test :refer-macros [deftest is testing async]]
-            [orchestra-cljs.spec.test :as orchestra]
+            [fonda.anomaly]
             [fonda.core :as fonda]
-            [fonda.anomaly]))
+            [fonda.core.specs]
+            [orchestra-cljs.spec.test :as orchestra]))
 
 (orchestra/instrument)
 
