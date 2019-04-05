@@ -29,8 +29,6 @@ This example illustrates `fonda`'s basic mechanics:
    :name           "github-response->things"
    :path           [:github-things]}]
 
- {:foo :bar}
-
  ;; on-success
  (fn [ctx]
    (handle-success (:github-things ctx)))
@@ -70,7 +68,7 @@ An anomaly returned by a step will also short circuit, with the following happen
  * The `on-anomaly` function is called.
 
 The following section describes the parameters `fonda/execute` accepts.
- 
+
 ## Parameters
 
 - **config** - static configuration map
@@ -104,7 +102,6 @@ The following section describes the parameters `fonda/execute` accepts.
     | `:name` | No | The name of the step |
 
 
-- **ctx**          The runtime starting context, merged to the initial context. Must be a map, `{}` by default.
 - **on-success**   Callback that gets called with the context if all steps succeed.
 - **on-anomaly**   Callback that gets called with an anomaly when any of the steps returns one.
 - **on-exception** Callback that gets called with an exception when any of the steps throws one.
@@ -159,8 +156,6 @@ The **log map** is a record that contains:
    {:processor      process-remote-thing-response ;; Pure function - ctx in - ctx out
     :name           "process-thing-response"
     :path           [:remote-thing]}]
-
-  {:foo :bar}
 
   ;; on-success
   (fn [{:keys [remote-thing-processed]}]
