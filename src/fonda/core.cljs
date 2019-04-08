@@ -15,9 +15,6 @@
 
   - `config`: A map with:
       - [opt] anomaly?      A function that gets a map and determines if it is an anomaly.
-      - [opt] log-exception A function gets called with the FondaContext record when there is an exception.
-      - [opt] log-anomaly   A function that gets called with the FondaContext record when a step returns an anomaly.
-      - [opt] log-success   A function that gets called with the FondaContext record after all steps succeeded.
       - [opt] initial-ctx   The data that initializes the context. Must be a map.
 
   - `steps`: Each item on the `steps` collection must be either a Tap, or a Processor.
@@ -35,22 +32,13 @@
   - `on-anomaly`   Callback that gets called with an anomaly when any step returns one.
   - `on-exception` Callback that gets called with an exception when any step triggers one."
   ([config steps on-success on-anomaly on-exception]
-   (let [{:keys [anomaly?
-                 log-exception
-                 log-anomaly
-                 log-success]} config]
-
-     (-> (e/map->FondaContext
-          {:anomaly?      (or anomaly? fonda.anomaly/anomaly?)
-           :log-exception log-exception
-           :log-anomaly   log-anomaly
-           :log-success   log-success
-           :ctx           (or (:initial-ctx config) {})
-           :on-success    on-success
-           :on-anomaly    on-anomaly
-           :on-exception  on-exception
-           :queue         (into #queue [] st/xf steps)
-           :stack         []})
-         (e/execute-steps)
-         (e/execute-loggers)
-         (e/deliver-result)))))
+   (-> (e/map->FondaContext
+        {:anomaly?      (or (:anomaly? config) fonda.anomaly/anomaly?)
+         :ctx           (or (:initial-ctx config) {})
+         :on-success    on-success
+         :on-anomaly    on-anomaly
+         :on-exception  on-exception
+         :queue         (into #queue [] st/xf steps)
+         :stack         []})
+       (e/execute-steps)
+       (e/deliver-result))))

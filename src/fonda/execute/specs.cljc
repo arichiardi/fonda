@@ -8,9 +8,6 @@
 (s/def ::fonda-context-async a/async?)
 (s/def ::fonda-context-sync
   (s/keys :req-un [::anomaly?
-                   ::log-exception
-                   ::log-anomaly
-                   ::log-success
                    ::ctx
                    ::on-success
                    ::on-anomaly
