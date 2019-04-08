@@ -3,12 +3,7 @@
             [fonda.step.specs :as step]))
 
 (s/def ::anomaly? (s/nilable fn?))
-(s/def ::log-exception (s/nilable fn?))
-(s/def ::log-anomaly (s/nilable fn?))
-(s/def ::log-success (s/nilable fn?))
-
 (s/def ::initial-ctx map?) ;; part of the config
-
 (s/def ::exception (s/nilable #(instance? js/Error %)))
 (s/def ::anomaly (s/nilable any?))
 (s/def ::on-success fn?)
@@ -22,10 +17,7 @@
 (s/def ::steps (s/coll-of ::step/step))
 
 (s/def ::config
-  (s/keys :opt-un [::anomaly?
-                   ::log-exception
-                   ::log-anomaly
-                   ::initial-ctx]))
+  (s/keys :opt-un [::anomaly?]))
 
 (s/fdef execute
   :args (s/cat :config ::config

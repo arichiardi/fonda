@@ -43,10 +43,7 @@ This example illustrates `fonda`'s basic mechanics:
 
 Fonda sequentially executes a series of [steps](#trivia), one after the other, augmenting a context map. The steps can be synchronous or asyncronous. After the steps are run, the termination callbacks will be executed.
 
-If a `js/Error`, an exception in `fonda` parlance, is thrown it will be automatically caught and the chain short circuits. Then the following things happen in order:
-
- * The `log-exception` function is called, if present, with the [log map](#log-map).
- * The `on-exception` function is called with the `js/Error`.
+If a `js/Error`, an exception in `fonda` parlance, is thrown it will be automatically caught and the chain short circuits and the `on-exception` function is called with the `js/Error`.
 
 Exceptions are things we can't and don't want to recover from, like unexpected bugs.
 
@@ -62,10 +59,7 @@ Anomalies are first class citizens in `fonda` and by default they are maps conta
 
 It is also possible to redefine what an anomaly is by passing a config predicate, `anomaly?`, so that client code can have its own representation of an anomaly.
 
-An anomaly returned by a step will also short circuit, with the following happening afterwards:
-
-* The `log-anomaly` function is called if present.
- * The `on-anomaly` function is called.
+An anomaly returned by a step will also short circuit and afterwards `on-anomaly` function is called.
 
 The following section describes the parameters `fonda/execute` accepts.
 
@@ -76,9 +70,6 @@ The following section describes the parameters `fonda/execute` accepts.
     | Key | Optional? | Notes |
     |---|---|---|
     | `:anomaly?` | Yes | A function that gets a map and determines if it is an anomaly |
-    | `:log-exception` | Yes | A function that gets called with the [log map](#log-map) when there is an exception |
-    | `:log-anomaly` | Yes | A function that gets called with the [log map](#log-map) when a step returns an anomaly |
-    | `:log-success` | Yes | A function that gets called after all the steps succeed |
     | `:initial-ctx` | Yes | The data that initializes the context. Must be a map, `{}` by default. |
 
  A function that gets the context map. If it succeeds, the result is then ignored.
@@ -106,44 +97,11 @@ The following section describes the parameters `fonda/execute` accepts.
 - **on-anomaly**   Callback that gets called with an anomaly when any of the steps returns one.
 - **on-exception** Callback that gets called with an exception when any of the steps throws one.
 
-### <a name="logging"></a>Logging
-
-Log functions are called after the steps have been executed. Log functions are non-blocking, and their returning value
-is ignored. Their only parameter is the [log map](#log-map)
-
-If all the steps succeeded, the `log-success` function will be called.
-
-If any step return an anomaly, the `log-anomaly` will be called instead.
-
-If any step threw an exception, the `log-exception` function will be called.
-
-
-#### <a name="log-map"></a>Log map
-
-It is a map that is passed to the logging functions.
-This is different from the context passed to the steps and it is only exposed to the these functions for logging purposes.
-
-The **log map** is a record that contains:
-
-- **:ctx**       The context that was threaded through the steps.
-- **:anomaly**   The anomaly caused by one of the steps, if any.
-- **:exception** The exception caused by one of the steps _or taps_, if any.
-- **:stack**     A stack with all the steps already executed. Last step in the stack is the last step executed.
-
 ## Full Example
 
 ```clojure
 (fonda/execute
   {:initial-ctx     {:env-var-xyz "value"}
-
-   :log-exception   (fn [{:keys [ctx exception]}]
-                      (println "Oh noes! An exception happened:" exception))
-
-   :log-anomaly     (fn [{:keys [ctx anomaly]}]
-                      (println "Well ok, some anomaly happened:" anomaly))
-
-   :log-success     (fn [{:keys [ctx]}]
-                      (println "Operation successful!"))}
 
   [{:processor      (fn [ctx]
                       (ajax/GET "http://remote-thing-url.com" {:params (:remote-thing-params ctx)})

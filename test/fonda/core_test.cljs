@@ -123,21 +123,6 @@
                        (fn [anomaly] (is (= tap-res anomaly)) (done))
                        exception-cb-throw)))))
 
-(deftest one-unsuccessful-sync-processor-log-anomaly-test
-  (testing "Passing one synchronous unsuccessful processor should call the log-anomaly with the fonda context"
-    (async done
-      (let [processor-res (anomaly :cognitect.anomalies/incorrect)
-            processor {:path      [:processor-path]
-                       :name      "processor name"
-                       :processor (fn [_] processor-res)}
-            log-anomaly (fn [{:keys [anomaly]}]
-                          (is (= processor-res anomaly)) (done))]
-        (fonda/execute {:log-anomaly log-anomaly}
-                       [processor]
-                       success-cb-throw
-                       (fn [_])
-                       exception-cb-throw)))))
-
 (deftest one-unsuccessful-async-processor-test
   (testing "Passing one asynchronous unsuccessful processor should call on-anomaly with the anomaly"
     (async done
@@ -149,21 +134,6 @@
                        [processor]
                        success-cb-throw
                        (fn [anomaly] (is (= processor-res anomaly)) (done))
-                       exception-cb-throw)))))
-
-(deftest one-unsuccessful-async-processor-log-anomaly-test
-  (testing "Passing one asynchronous unsuccessful processor should call the log-anomaly with the fonda context"
-    (async done
-      (let [processor-res (anomaly :cognitect.anomalies/incorrect)
-            processor {:path      [:processor-path]
-                       :name      "processor name"
-                       :processor (fn [_] (js/Promise.resolve processor-res))}
-            log-anomaly (fn [{:keys [anomaly]}]
-                          (is (= processor-res anomaly)) (done))]
-        (fonda/execute {:log-anomaly log-anomaly}
-                       [processor]
-                       success-cb-throw
-                       (fn [_])
                        exception-cb-throw)))))
 
 (deftest one-exceptional-sync-processor-test
@@ -191,22 +161,6 @@
                        anomaly-cb-throw
                        (fn [err] (is (= tap-res err)) (done)))))))
 
-(deftest one-exceptional-sync-processor-exception-tap-test
-  (testing "Passing one synchronous exceptional processor should call log-exception with the fonda context"
-    (async done
-      (let [processor-res (js/Error "Bad exception")
-            processor {:path      [:processor-path]
-                       :name      "processor name"
-                       :processor (fn [_] (throw processor-res))}
-            log-exception (fn [{:keys [exception]}]
-                            (is (= processor-res exception)) (done))]
-        (fonda/execute {:log-exception log-exception}
-                       [processor]
-                       success-cb-throw
-                       anomaly-cb-throw
-                       (fn [_]))))))
-
-
 (deftest one-exceptional-async-processor-test
   (testing "Passing one asynchronous exceptional processor should call on-anomaly with the anomaly"
     (async done
@@ -219,21 +173,6 @@
                        success-cb-throw
                        anomaly-cb-throw
                        (fn [err] (is (= processor-res err)) (done)))))))
-
-(deftest one-exceptional-async-processor-log-exception-test
-  (testing "Passing one asynchronous exceptional processor should call log-exception with the fonda context"
-    (async done
-      (let [processor-res (js/Error "Bad exception")
-            processor {:path      [:processor-path]
-                       :name      "processor name"
-                       :processor (fn [_] (js/Promise.reject processor-res))}
-            log-exception (fn [{:keys [exception]}]
-                            (is (= processor-res exception)) (done))]
-        (fonda/execute {:log-exception log-exception}
-                       [processor]
-                       success-cb-throw
-                       anomaly-cb-throw
-                       (fn [_]))))))
 
 (deftest multiple-successful-synchronous-steps-test
   (testing "Passing multiple successful synchronous steps should call the on-success callback with the augmented context"

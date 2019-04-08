@@ -52,22 +52,6 @@
 ;; PUBLIC ;;
 ;;;;;;;;;;;;
 
-(defn execute-loggers
-  "Executes one of the global tap functions.
-
-  If the context has an anomaly, calls log-anomaly.
-  If the context has an exception, calls log-exception"
-  [{:as fonda-ctx :keys [exception anomaly log-exception log-anomaly log-success]}]
-
-  (if (a/async? fonda-ctx)
-    (a/continue fonda-ctx execute-loggers log-exception)
-
-    (let [log-fn (cond (and exception log-exception) log-exception
-                       (and anomaly log-anomaly) log-anomaly
-                       (and (not anomaly) (not exception) log-success) log-success)]
-      (when log-fn (log-fn (select-keys fonda-ctx log-map-keys)))
-      fonda-ctx)))
-
 (defn execute-steps
   "Sequentially runs each of the steps.
 
@@ -88,15 +72,6 @@
 (defrecord FondaContext
   [;; A function that gets a map and determines if it is an anomaly
    anomaly?
-
-   ;; A function gets called with the fonda context when there is an exception
-   log-exception
-
-   ;; A function that gets called with the fonda context when a step returns an anomaly
-   log-anomaly
-
-   ;; A function that gets called with the fonda context after all steps succeeded
-   log-success
 
    ;; The context data that gets passed to the step functions
    ctx
