@@ -1,6 +1,6 @@
 (ns fonda.step
-  (:require [clojure.spec.alpha :as s]
-            [fonda.meta :as meta]))
+  (:require [fonda.meta :as meta]))
+
 
 (defrecord Tap
   [;; A function that gets the context but doesn't augment it
@@ -19,6 +19,13 @@
    ;; Path were to attach the processor result on the context
    path])
 
+(defrecord Injector
+   [;; Function that returns step(s) to be injected  right after this step on the queue
+    inject
+
+    ;; Name for the step
+    name])
+
 (defn resolve-function
   [fn-or-keyword]
   (if (qualified-keyword? fn-or-keyword)
@@ -26,10 +33,11 @@
     fn-or-keyword))
 
 (defn step->record
-  [{:keys [tap processor] :as step}]
+  [{:keys [tap processor inject] :as step}]
   (cond
     tap (map->Tap (update step :tap resolve-function))
-    processor (map->Processor (update step :processor resolve-function))))
+    processor (map->Processor (update step :processor resolve-function))
+    inject (map->Injector (update step :inject resolve-function))))
 
 (def ^{:doc "Step transducer."}
   xf

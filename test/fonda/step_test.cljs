@@ -17,3 +17,8 @@
                                  :path [:test]})]
     (is (record? step) "the step should be a record")
     (is (fn? (:tap step)) "the :tap key should become a function")))
+
+(deftest injector-step-test
+  (let [step (step/step->record {:inject :cljs.core/println})]
+    (is (record? step) "the injector should be a record")
+    (is (fn? (:inject step)) "the :inject key should become a function")))

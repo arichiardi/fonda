@@ -44,3 +44,8 @@
 (s/fdef assoc-tap-result
   :args (s/cat :fonda-ctx ::fonda-context
                :res any?))
+
+(s/fdef assoc-injector-result
+  :args (s/cat :fonda-ctx ::fonda-context
+               :res (s/or :step ::step/step
+                          :step-coll (s/coll-of ::step/step))))

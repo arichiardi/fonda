@@ -71,7 +71,7 @@ The following section describes the parameters `fonda/execute` accepts.
     | `:anomaly?` | Yes | A boolean or a function that gets a map and determines if it is an anomaly. |
     | `:initial-ctx` | Yes | The data that initializes the context. Must be a map, `{}` by default. |
 
-- **steps** - each item must be either a `Tap` or a `Processor`
+- **steps** - each item must be either a `Tap` or a `Processor`, or a `Injector`
 
   - tap
 
@@ -87,6 +87,14 @@ The following section describes the parameters `fonda/execute` accepts.
     | `:processor` | No | A function that gets the context and returns data. The data is [assoced-in](https://clojuredocs.org/clojure.core/assoc-in) at the given path Can be asynchronous. If asynchronous it will still block the pipeline and interrupt the execution whenever either an anomaly or an exception happen. |
     | `:path` | No | Path where to assoc the result of the processor |
     | `:name` | Yes | The name of the step as string or keyword |
+    | `:name` | Yes | The name of the step |
+   
+  - injector
+    | Key | Optional? | Notes |
+    |---|---|---|
+    | `:injector` | No | A function that gets the context and returns either a step or a collection of them. The step(s) returned will be executed right after the injector step and just before the next steps. Can be asynchronous.
+    | `:name` | Yes | The name of the injector step |
+   
 
 - **on-exception**          Function called with an exception when any of the steps throws one.
 - **on-success**            Function called with the context if all steps succeed.
@@ -97,7 +105,9 @@ The following section describes the parameters `fonda/execute` accepts.
 
 ```clojure
 (fonda/execute
-  {:initial-ctx     {:env-var-xyz "value"}
+  {:initial-ctx     {:env-var-xyz "value", 
+                     :remote-thing-params {:p1 "p1" :p2 "p2"}
+                     :other-remote-thing-responses []}
 
   [{:processor      (fn [ctx]
                       (ajax/GET "http://remote-thing-url.com" {:params (:remote-thing-params ctx)})
@@ -106,8 +116,15 @@ The following section describes the parameters `fonda/execute` accepts.
    {:tap            (fn [{:keys [remote-thing-response]}]
                       (println "the remote thing response was:" remote-thing-response))}
 
-   {:processor      process-remote-thing-response ;; Pure function - ctx in - ctx out
-    :path           [:remote-thing]}]
+   {:processor      process-remote-thing-response ;; Pure function - ctx in - processed response out
+    :path           [:remote-thing]}
+    
+   ;; Injector returns a collection of steps to be added right after the injector step
+   {:inject         (fn [{:keys [remote-thing]}]                    
+                      (->> (:side-effect-post-urls remote-thing)
+                           (map (fn [side-effect-post-url]
+                                  {:tap (fn [{:keys [remote-thing-params]}]
+                                          (ajax/POST side-effect-post-url remote-thing-params))}))))}]
 
   ;; on-exception
   (fn [exception]

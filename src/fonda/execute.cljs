@@ -15,18 +15,26 @@
     (assoc fonda-ctx :anomaly res)
     (assoc-in fonda-ctx (concat [:ctx] path) res)))
 
+(defn assoc-injector-result
+  [{:as fonda-ctx :keys [queue]} res]
+  (let [steps (if (sequential? res) res [res])]
+    (assoc fonda-ctx :queue (into #queue [] st/xf (concat steps queue)))))
+
 (defn- try-step
   "Tries running the given step (a tap step, or a processor step).
   If an exception gets triggerd, an exception is added on the context.
   If an anomaly is returned, an anomaly is added to the context"
   [{:as fonda-ctx :keys [ctx]}
-   {:as step :keys [processor tap]}]
+   {:as step :keys [processor tap inject]}]
   (try
-    (let [res (if processor (processor ctx) (tap ctx))
+    (let [res (cond
+                processor (processor ctx)
+                tap (tap ctx)
+                inject (inject ctx))
           assoc-result-fn (cond
-                            (not (nil? tap)) (partial assoc-tap-result fonda-ctx)
-                            (not (nil? processor)) (partial assoc-processor-result fonda-ctx (:path step)))]
-
+                            tap (partial assoc-tap-result fonda-ctx)
+                            processor (partial assoc-processor-result fonda-ctx (:path step))
+                            inject (partial assoc-injector-result fonda-ctx))]
       (if (a/async? res)
         (a/continue res assoc-result-fn #(assoc fonda-ctx :exception %))
         (assoc-result-fn res)))
