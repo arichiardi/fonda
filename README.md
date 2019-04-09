@@ -90,13 +90,13 @@ The following section describes the parameters `fonda/execute` accepts.
     | `:processor` | No | A function that gets the context and returns data. The data is [assoced-in](https://clojuredocs.org/clojure.core/assoc-in) at the given path Can be asynchronous. If asynchronous it will still block the pipeline and interrupt the execution whenever either an anomaly or an exception happen. |
     | `:path` | No | Path where to assoc the result of the processor |
     | `:name` | Yes | The name of the step as string or keyword |
-    | `:name` | Yes | The name of the step |
 
   - injector
+  
     | Key | Optional? | Notes |
     |---|---|---|
-    | `:injector` | No | A function that gets the context and returns either a step or a collection of them. The step(s) returned will be executed right after the injector step and just before the next steps. Can be asynchronous.
-    | `:name` | Yes | The name of the injector step |
+    | `:injector` | No | A function that gets the context and returns either a step or a collection of steps. The step(s) returned will be executed right after the injector step and just before the next steps. Can be asynchronous.
+    | `:name` | Yes | The name of the injector step as string or keyword |
 
 
 - **on-exception**          Function called with an exception when any of the steps throws one.
