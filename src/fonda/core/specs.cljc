@@ -10,7 +10,12 @@
 (s/def ::on-exception fn?)
 (s/def ::on-anomaly (s/nilable fn?))
 
-(s/def ::steps (s/coll-of ::step/step))
+(s/def ::step
+  (s/or :tap-step       ::step/tap-step
+        :processor-step ::step/processor-step
+        :injector-step  ::step/injector-step))
+
+(s/def ::steps (s/coll-of ::step))
 
 (s/def ::config
   (s/keys :opt-un [::anomaly? ::initial-ctx]))
