@@ -11,9 +11,11 @@
           :test {:target    :node-test
                  :output-to "dist/test.js"
                  :autorun   true
+                 :devtools  {:preloads [fonda.test-preload]}
                  :release   {:compiler-options {:optimizations     :simple
                                                 :variable-renaming :off
                                                 :property-renaming :off
                                                 :pretty-print      true
-                                                :source-map        true}
+                                                :source-map        true
+                                                :elide-asserts     false}
                              :autorun          false}}}}

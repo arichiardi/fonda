@@ -22,21 +22,20 @@ This example illustrates `fonda`'s basic mechanics:
  [{:processor      (fn [ctx]
                      (http/get "http://insecure-endpoint.com"
                                {:basic-auth (select-keys ctx [:username :password])}))
-   :name           "get-all-things"
    :path           [:github-response]}
 
   {:processor      github-response->things   ;; Pure function - ctx in -> ctx out
-   :name           "github-response->things"
    :path           [:github-things]}]
-
- ;; on-success
- (fn [ctx]
-   (handle-success (:github-things ctx)))
 
  ;; on-exception
  (fn [exception]
-   (handle-exception exception)))
+   (handle-exception exception))
+
+ ;; on-success
+ (fn [ctx]
+   (handle-success (:github-things ctx))))
 ```
+
 *HINT*: The parameter order makes it easy to partially apply `execute` for leaner call sites.
 
 ---
@@ -57,9 +56,9 @@ There is a stark contrast between anomalies and JavaScript `js/Error`s, Promise 
 
 Anomalies are first class citizens in `fonda` and by default they are maps containing the [`:cognitect.anomalies/anomaly`](https://github.com/cognitect-labs/anomalies) key.
 
-It is also possible to redefine what an anomaly is by passing a config predicate, `anomaly?`, so that client code can have its own representation of an anomaly.
+If `anomaly?` is truthy and an anomaly is returned by a step the whole pipeline short circuits and the `on-anomaly` function is called.
 
-An anomaly returned by a step will also short circuit and afterwards `on-anomaly` function is called.
+It is also possible to redefine what an anomaly is by passing a config predicate, `anomaly?`, so that client code can have its own representation of an anomaly as data.
 
 The following section describes the parameters `fonda/execute` accepts.
 
@@ -69,11 +68,8 @@ The following section describes the parameters `fonda/execute` accepts.
 
     | Key | Optional? | Notes |
     |---|---|---|
-    | `:anomaly?` | Yes | A function that gets a map and determines if it is an anomaly |
+    | `:anomaly?` | Yes | A boolean or a function that gets a map and determines if it is an anomaly. |
     | `:initial-ctx` | Yes | The data that initializes the context. Must be a map, `{}` by default. |
-
- A function that gets the context map. If it succeeds, the result is then ignored.
-            It will still block the steps processing if it is asynchronous, and it will interrupt the steps execution if it returns an anomaly, or it triggers an exception
 
 - **steps** - each item must be either a `Tap` or a `Processor`
 
@@ -82,7 +78,7 @@ The following section describes the parameters `fonda/execute` accepts.
     | Key | Optional? | Notes |
     |---|---|---|
     | `:tap` | No | A function that gets the context but doesn't augment it. If it succeeds the result is ignored. If asynchronous it will still block the pipeline and interrupt the execution whenever either an anomaly or an exception happen. |
-    | `:name` | No | The name of the step |
+    | `:name` | Yes | The name of the step as string or keyword |
 
   - processor
 
@@ -90,12 +86,12 @@ The following section describes the parameters `fonda/execute` accepts.
     |---|---|---|
     | `:processor` | No | A function that gets the context and returns data. The data is [assoced-in](https://clojuredocs.org/clojure.core/assoc-in) at the given path Can be asynchronous. If asynchronous it will still block the pipeline and interrupt the execution whenever either an anomaly or an exception happen. |
     | `:path` | No | Path where to assoc the result of the processor |
-    | `:name` | No | The name of the step |
+    | `:name` | Yes | The name of the step as string or keyword |
 
+- **on-exception**          Function called with an exception when any of the steps throws one.
+- **on-success**            Function called with the context if all steps succeed.
+- [Optional] **on-anomaly** Function called in case of anomaly with the anomaly data itself.
 
-- **on-success**   Callback that gets called with the context if all steps succeed.
-- **on-anomaly**   Callback that gets called with an anomaly when any of the steps returns one.
-- **on-exception** Callback that gets called with an exception when any of the steps throws one.
 
 ## Full Example
 
@@ -105,15 +101,17 @@ The following section describes the parameters `fonda/execute` accepts.
 
   [{:processor      (fn [ctx]
                       (ajax/GET "http://remote-thing-url.com" {:params (:remote-thing-params ctx)})
-    :name           "get-remote-thing"
     :path           [:remote-thing-response]}
 
    {:tap            (fn [{:keys [remote-thing-response]}]
                       (println "the remote thing response was:" remote-thing-response))}
 
    {:processor      process-remote-thing-response ;; Pure function - ctx in - ctx out
-    :name           "process-thing-response"
     :path           [:remote-thing]}]
+
+  ;; on-exception
+  (fn [exception]
+   (handle-exception exception))
 
   ;; on-success
   (fn [{:keys [remote-thing-processed]}]
@@ -121,11 +119,7 @@ The following section describes the parameters `fonda/execute` accepts.
 
   ;; on-anomaly
   (fn [anomaly]
-   (handle-anomaly anomaly))
-
-  ;; on-exception
-  (fn [exception]
-   (handle-exception exception)))
+   (handle-anomaly anomaly)))
 
 ```
 

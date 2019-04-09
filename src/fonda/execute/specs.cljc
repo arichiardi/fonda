@@ -2,20 +2,26 @@
   (:require [clojure.spec.alpha :as s]
             [fonda.step.specs :as step]))
 
+;; the following are all required but nilable we use a record as FondaContext.
+
+(s/def ::anomaly-fn (s/nilable fn?))
+(s/def ::exception (s/nilable #(instance? js/Error %)))
+(s/def ::anomaly (s/nilable any?))
 (s/def ::queue (s/coll-of ::step))
 (s/def ::stack (s/coll-of ::step))
 
-(s/def ::fonda-context-async a/async?)
+(s/def ::fonda-context-async some?)
+
 (s/def ::fonda-context-sync
-  (s/keys :req-un [::anomaly?
-                   ::ctx
+  (s/keys :req-un [::ctx
                    ::on-success
                    ::on-anomaly
                    ::on-exception
                    ::queue
                    ::stack
                    ::exception
-                   ::anomaly]))
+                   ::anomaly
+                   ::anomaly-fn]))
 
 (s/def ::fonda-context (s/or :async ::fonda-context-async
                              :sync ::fonda-context-sync))

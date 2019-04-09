@@ -7,6 +7,11 @@ and this project adheres to [Semantic Versioning](http://semver.org/spec/v2.0.0.
 
 ## [master](https://github.com/elasticpath/fonda/compare/v0.2.1...HEAD) - UNRELEASED
 
+### Changed
+
+- Make short-circuiting for anomalies optional. [#38](https://github.com/elasticpath/fonda/pull/38)
+- Change `fonda.core/execute` signature to `(fn [config steps on-exception on-success & on-anomaly])`. [#38](https://github.com/elasticpath/fonda/pull/38)
+
 ### Added
 
 - Resolve qualified keywords to step functions. [#32](https://github.com/elasticpath/fonda/pull/32)

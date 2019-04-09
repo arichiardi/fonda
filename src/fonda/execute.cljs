@@ -3,16 +3,15 @@
             [fonda.async :as a]
             [fonda.step :as st]))
 
-(def log-map-keys [:exception :anomaly :ctx :stack])
-
-(defn assoc-tap-result [{:as fonda-ctx :keys [anomaly?]} res]
-  (if (anomaly? res)
+(defn assoc-tap-result
+  [{:as fonda-ctx :keys [anomaly-fn]} res]
+  (if (and anomaly-fn (anomaly-fn res))
     (assoc fonda-ctx :anomaly res)
     fonda-ctx))
 
 (defn assoc-processor-result
-  [{:as fonda-ctx :keys [anomaly?]} path res]
-  (if (anomaly? res)
+  [{:as fonda-ctx :keys [anomaly-fn]} path res]
+  (if (and anomaly-fn (anomaly-fn res))
     (assoc fonda-ctx :anomaly res)
     (assoc-in fonda-ctx (concat [:ctx] path) res)))
 
@@ -21,12 +20,12 @@
   If an exception gets triggerd, an exception is added on the context.
   If an anomaly is returned, an anomaly is added to the context"
   [{:as fonda-ctx :keys [ctx]}
-   {:as step :keys [path name processor tap]}]
+   {:as step :keys [processor tap]}]
   (try
     (let [res (if processor (processor ctx) (tap ctx))
           assoc-result-fn (cond
                             (not (nil? tap)) (partial assoc-tap-result fonda-ctx)
-                            (not (nil? processor)) (partial assoc-processor-result fonda-ctx path))]
+                            (not (nil? processor)) (partial assoc-processor-result fonda-ctx (:path step)))]
 
       (if (a/async? res)
         (a/continue res assoc-result-fn #(assoc fonda-ctx :exception %))
@@ -40,17 +39,13 @@
   If there is an exception on the context, calls on-exception.
   If there is an anomaly on the context, calls on-anomaly.
   Otherwise calls on-success."
-  [{:as fonda-ctx :keys [exception anomaly on-exception on-anomaly on-success ctx]}]
+  [{:as fonda-ctx :keys [ctx exception anomaly]}]
   (if (a/async? fonda-ctx)
-    (a/continue fonda-ctx deliver-result on-exception)
-    (let [cb (cond exception #(on-exception exception)
-                   anomaly #(on-anomaly anomaly)
-                   :else #(on-success ctx))]
-      (cb))))
-
-;;;;;;;;;;;;
-;; PUBLIC ;;
-;;;;;;;;;;;;
+    (a/continue fonda-ctx deliver-result (:on-exception fonda-ctx))
+    (let [[cb result] (cond exception [(:on-exception fonda-ctx) exception]
+                            anomaly [(:on-anomaly fonda-ctx) anomaly]
+                            :else [(:on-success fonda-ctx) ctx])]
+      (cb result))))
 
 (defn execute-steps
   "Sequentially runs each of the steps.
@@ -71,15 +66,15 @@
 
 (defrecord FondaContext
   [;; A function that gets a map and determines if it is an anomaly
-   anomaly?
+   anomaly-fn
 
    ;; The context data that gets passed to the step functions
    ctx
 
-   ;; An exception thrown by a step
+   ;; The exception thrown by the latest failing step
    exception
 
-   ;; An anomaly returned by a step
+   ;; The anomaly returned by the latest failing step
    anomaly
 
    ;; Callback function that gets called with the context after all the steps succeeded
@@ -96,3 +91,46 @@
 
    ;; The steps that have already been processed
    stack])
+
+(defn cognitect-anomaly?
+  [m]
+  (:cognitect.anomalies/anomaly m))
+
+(defn anomaly-fn
+  "Compute the anomaly-fn from the parameter.
+
+  This function does the :anomaly? parameter validation."
+  [anomaly?]
+  ;; use specs one day?
+  (assert (or (boolean? anomaly?)
+              (nil? anomaly?)
+              (fn? anomaly?))
+          "The :anomaly? key should be either nil, boolean or a function.")
+
+  (cond
+    (true? anomaly?)  cognitect-anomaly?
+    (false? anomaly?) nil
+    (some? anomaly?)  anomaly?
+    :else             nil))
+
+(defn fonda-context
+  "Build the run time \"Fonda\" context from the config.
+
+  This function does config validation."
+  [config]
+  (let [{:keys [anomaly? on-exception on-anomaly on-success steps]} config
+        anomaly-fn (anomaly-fn anomaly?)]
+
+    (assert (or (not anomaly-fn) (and anomaly-fn on-anomaly)) "When :anomaly? is truthy the on-anomaly callback is required.")
+    (assert on-success "The on-success callback is required.")
+    (assert on-exception "The on-exception callback is required.")
+
+    (map->FondaContext
+     (merge {:on-anomaly   on-anomaly
+             :on-exception on-exception
+             :on-success   on-success}
+            (when anomaly-fn
+              {:anomaly-fn anomaly-fn})
+            {:ctx   (or (:initial-ctx config) {})
+             :queue (into #queue [] st/xf steps)
+             :stack []}))))
