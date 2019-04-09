@@ -32,9 +32,9 @@
                 tap (tap ctx)
                 inject (inject ctx))
           assoc-result-fn (cond
-                            (not (nil? tap)) (partial assoc-tap-result fonda-ctx)
-                            (not (nil? processor)) (partial assoc-processor-result fonda-ctx (:path step))
-                            (not (nil? inject)) (partial assoc-injector-result fonda-ctx))]
+                            tap (partial assoc-tap-result fonda-ctx)
+                            processor (partial assoc-processor-result fonda-ctx (:path step))
+                            inject (partial assoc-injector-result fonda-ctx))]
       (if (a/async? res)
         (a/continue res assoc-result-fn #(assoc fonda-ctx :exception %))
         (assoc-result-fn res)))

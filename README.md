@@ -105,7 +105,9 @@ The following section describes the parameters `fonda/execute` accepts.
 
 ```clojure
 (fonda/execute
-  {:initial-ctx     {:env-var-xyz "value", :remote-thing-params {:p1 "p1" :p2 "p2"} :other-remote-thing-responses []}
+  {:initial-ctx     {:env-var-xyz "value", 
+                     :remote-thing-params {:p1 "p1" :p2 "p2"}
+                     :other-remote-thing-responses []}
 
   [{:processor      (fn [ctx]
                       (ajax/GET "http://remote-thing-url.com" {:params (:remote-thing-params ctx)})
