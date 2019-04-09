@@ -9,23 +9,26 @@ An async pipeline approach to functional core - imperative shell from by Gary Be
 This example illustrates `fonda`'s basic mechanics:
 
 ```clojure
-(ns fonda.example.simple
+(ns example.simple
   (:require [cljs-http.client :as http]
             [cljs.core.async :as cca :include-macros true]
             [clojure.set :as set]
             [fonda.core :as fonda]))
 
+(defn fetch-user
+  [ctx]
+  (http/get "http://insecure-endpoint.com"
+            {:basic-auth (select-keys ctx [:username :password])}))
+
 (fonda/execute
- {:initial-ctx     {:username js/process.USER
-                    :password js/process.PASSWORD}}
+ {:initial-ctx {:username js/process.USER
+                :password js/process.PASSWORD}}
 
- [{:processor      (fn [ctx]
-                     (http/get "http://insecure-endpoint.com"
-                               {:basic-auth (select-keys ctx [:username :password])}))
-   :path           [:github-response]}
+ [{:processor :example.simple/fetch-user                ;; can be either a function or a keyword
+   :path      [:github-response]}
 
-  {:processor      github-response->things   ;; Pure function - ctx in -> ctx out
-   :path           [:github-things]}]
+  {:processor :example.simple/github-response->things   ;; Pure function - ctx in -> ctx out
+   :path      [:github-things]}]
 
  ;; on-exception
  (fn [exception]
