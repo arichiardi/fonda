@@ -2,7 +2,7 @@
   (:require [clojure.spec.alpha :as s]))
 
 ;; Common for all steps
-(s/def ::name string?)
+(s/def ::name (s/nilable string?))
 (s/def ::step-common
   (s/keys :opt-un [::name]))
 
