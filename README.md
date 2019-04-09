@@ -24,11 +24,11 @@ This example illustrates `fonda`'s basic mechanics:
  {:initial-ctx {:username js/process.USER
                 :password js/process.PASSWORD}}
 
- [{:processor :example.simple/fetch-user                ;; can be either a function or a keyword
-   :path      [:github-response]}
+ [{:processor  :example.simple/fetch-user                ;; can be either a function or a keyword
+   :path       [:github-response]}
 
-  {:processor :example.simple/github-response->things   ;; pure function - ctx in -> ctx out
-   :path      [:github-things]}]
+  {:processor  :example.simple/github-response->things   ;; pure function - ctx in -> ctx out
+   :path       [:github-things]}]
 
  ;; on-exception
  (fn [exception]
@@ -119,17 +119,17 @@ The following section describes the parameters `fonda/execute` accepts.
   (ajax/GET "http://remote-thing-url.com" {:params (:remote-thing-params ctx)}))
 
 (fonda/execute
-  {:initial-ctx     {:env-var-xyz "value",
-                     :remote-thing-params {:p1 "p1" :p2 "p2"}
-                     :other-remote-thing-responses []}
+  {:initial-ctx {:env-var-xyz "value",
+                 :remote-thing-params {:p1 "p1" :p2 "p2"}
+                 :other-remote-thing-responses []}
 
-  [{:processor      :example.full/get-remote-thing
-    :path           [:remote-thing-response]}
+  [{:processor  :example.full/get-remote-thing
+    :path       [:remote-thing-response]}
 
-   {:tap            :example.full/print-remote-thing}
+   {:tap        :example.full/print-remote-thing}
 
-   {:processor      :other.namespace/process-remote-thing-response
-    :path           [:remote-thing]}
+   {:processor  :other.namespace/process-remote-thing-response
+    :path       [:remote-thing]}
 
    ;; Injector returns a collection of steps to be added right after the injector step
    {:inject         (fn [{:keys [remote-thing]}]
