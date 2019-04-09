@@ -25,7 +25,7 @@
   If an exception gets triggerd, an exception is added on the context.
   If an anomaly is returned, an anomaly is added to the context"
   [{:as fonda-ctx :keys [ctx]}
-   {:as step :keys [processor tap]}]
+   {:as step :keys [processor tap inject]}]
   (try
     (let [res (cond
                 processor (processor ctx)
@@ -35,7 +35,6 @@
                             (not (nil? tap)) (partial assoc-tap-result fonda-ctx)
                             (not (nil? processor)) (partial assoc-processor-result fonda-ctx (:path step))
                             (not (nil? inject)) (partial assoc-injector-result fonda-ctx))]
-
       (if (a/async? res)
         (a/continue res assoc-result-fn #(assoc fonda-ctx :exception %))
         (assoc-result-fn res)))

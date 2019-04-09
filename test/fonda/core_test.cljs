@@ -380,9 +380,9 @@
                        :name      "processor2"
                        :processor (fn [{:keys [steps]}]
                                     (conj steps :step2))}]
+                     exception-cb-throw
                      (fn [res] (is (= res {:steps [:step1 :injected-step :step2]})) (done))
-                     anomaly-cb-throw
-                     exception-cb-throw))))
+                     anomaly-cb-throw))))
 
 (deftest injected-steps-should-run-after-injector
   (testing "Injecting multiple steps should add the steps after the injector"
@@ -406,9 +406,9 @@
                        :name      "processor2"
                        :processor (fn [{:keys [steps]}]
                                     (conj steps :step2))}]
+                     exception-cb-throw
                      (fn [res] (is (= res {:steps [:step1 :injected-step1 :injected-step2 :step2]})) (done))
-                     anomaly-cb-throw
-                     exception-cb-throw))))
+                     anomaly-cb-throw))))
 
 (deftest lonely-injector-with-one-step
   (testing "Only one injector on the steps"
@@ -420,9 +420,9 @@
                                   :processor (fn [{:keys [steps]}]
                                                (conj steps :injected-step))})
                        :name   "injector1"}]
+                     exception-cb-throw
                      (fn [res] (is (= res {:steps [:injected-step]})) (done))
-                     anomaly-cb-throw
-                     exception-cb-throw))))
+                     anomaly-cb-throw))))
 
 (deftest lonely-injector-with-multiple-steps
   (testing "Only one injector on the steps"
@@ -438,6 +438,6 @@
                                    :processor (fn [{:keys [steps]}]
                                                 (conj steps :injected-step2))}])
                        :name   "injector1"}]
+                     exception-cb-throw
                      (fn [res] (is (= res {:steps [:injected-step1 :injected-step2]})) (done))
-                     anomaly-cb-throw
-                     exception-cb-throw))))
+                     anomaly-cb-throw))))

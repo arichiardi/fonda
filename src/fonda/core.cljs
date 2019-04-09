@@ -1,6 +1,5 @@
 (ns fonda.core
-  (:require [fonda.anomaly]
-            [fonda.execute :as e]
+  (:require [fonda.execute :as e]
             [fonda.step :as st]))
 
 ;;;;;;;;;;;;;;;;;
@@ -26,6 +25,11 @@
        - processor: A function that gets the context and assocs the result into it on the given path
        - path:     Path where to assoc the result of the processor
        - name:     The name of the step
+
+      Injector:
+       - inject: A function that gets the context and returns either a step or a collection of them.
+                 The step(s) returned will be executed right after the injector step and just before the next steps. Can be asynchronous.
+       - name:   The name of the injector step
 
   - on-success   Callback that gets called with the context if all the steps succeeded.
   - on-exception Callback that gets called with an exception when any step triggers one.
