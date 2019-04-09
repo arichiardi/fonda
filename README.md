@@ -27,7 +27,7 @@ This example illustrates `fonda`'s basic mechanics:
  [{:processor :example.simple/fetch-user                ;; can be either a function or a keyword
    :path      [:github-response]}
 
-  {:processor :example.simple/github-response->things   ;; Pure function - ctx in -> ctx out
+  {:processor :example.simple/github-response->things   ;; pure function - ctx in -> ctx out
    :path      [:github-things]}]
 
  ;; on-exception
@@ -91,13 +91,13 @@ The following section describes the parameters `fonda/execute` accepts.
     | `:path` | No | Path where to assoc the result of the processor |
     | `:name` | Yes | The name of the step as string or keyword |
     | `:name` | Yes | The name of the step |
-   
+
   - injector
     | Key | Optional? | Notes |
     |---|---|---|
     | `:injector` | No | A function that gets the context and returns either a step or a collection of them. The step(s) returned will be executed right after the injector step and just before the next steps. Can be asynchronous.
     | `:name` | Yes | The name of the injector step |
-   
+
 
 - **on-exception**          Function called with an exception when any of the steps throws one.
 - **on-success**            Function called with the context if all steps succeed.
@@ -107,23 +107,32 @@ The following section describes the parameters `fonda/execute` accepts.
 ## Full Example
 
 ```clojure
+(ns example.full
+  ...)
+
+(defn print-remote-thing
+  [{:keys [remote-thing-response]}]
+  (println "the remote thing response was:" remote-thing-response))
+
+(defn get-remote-thing
+  [ctx]
+  (ajax/GET "http://remote-thing-url.com" {:params (:remote-thing-params ctx)}))
+
 (fonda/execute
-  {:initial-ctx     {:env-var-xyz "value", 
+  {:initial-ctx     {:env-var-xyz "value",
                      :remote-thing-params {:p1 "p1" :p2 "p2"}
                      :other-remote-thing-responses []}
 
-  [{:processor      (fn [ctx]
-                      (ajax/GET "http://remote-thing-url.com" {:params (:remote-thing-params ctx)})
+  [{:processor      :example.full/get-remote-thing
     :path           [:remote-thing-response]}
 
-   {:tap            (fn [{:keys [remote-thing-response]}]
-                      (println "the remote thing response was:" remote-thing-response))}
+   {:tap            :example.full/print-remote-thing}
 
-   {:processor      process-remote-thing-response ;; Pure function - ctx in - processed response out
+   {:processor      :other.namespace/process-remote-thing-response
     :path           [:remote-thing]}
-    
+
    ;; Injector returns a collection of steps to be added right after the injector step
-   {:inject         (fn [{:keys [remote-thing]}]                    
+   {:inject         (fn [{:keys [remote-thing]}]
                       (->> (:side-effect-post-urls remote-thing)
                            (map (fn [side-effect-post-url]
                                   {:tap (fn [{:keys [remote-thing-params]}]
