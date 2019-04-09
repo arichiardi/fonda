@@ -86,7 +86,7 @@ prepare-release: ##@deploy Prepare a release - bump version, commit and tag.
 	git commit --gpg-sign --message "Release ${next_version}"
 	git tag -sa --message "Release ${next_tag}" ${next_tag}
 
-deploy: clean jar
+deploy: clean jar  ##@deploy Deploy the fonda jar file.
 	mvn clean deploy:deploy-file \
       -Durl=https://repo.clojars.org \
       -DrepositoryId=clojars \

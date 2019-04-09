@@ -5,7 +5,7 @@
   <groupId>com.elasticpath</groupId>
   <artifactId>fonda</artifactId>
   <name>fonda</name>
-  <version>0.2.1</version>
+  <version>1.0.0-SNAPSHOT</version>
   <description>An async pipeline approach to functional core - imperative shell.</description>
 
   <url>https://github.com/elasticpath/fonda</url>
