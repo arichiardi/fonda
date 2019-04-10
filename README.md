@@ -71,6 +71,8 @@ The following section describes the parameters `fonda/execute` accepts.
     |---|---|---|
     | `:anomaly?` | Yes | A boolean or a function that gets a map and determines if it is an anomaly. |
     | `:initial-ctx` | Yes | The data that initializes the context. Must be a map, `{}` by default. |
+    | `:anomaly-handlers` | Yes | A map of functions indexed by step name that get called with a map `{:ctx <ctx> :anomaly <anomaly>}` when the step returns an anomaly. |
+    | `:exception-handlers` | Yes | A map of functions indexed by step name that get called with a map `{:ctx <ctx> :exception <exception>}` when the step triggers an exception. |
 
 - **steps** - each item must be either a `Tap` or a `Processor`, or a `Injector`
 
@@ -120,8 +122,13 @@ The following section describes the parameters `fonda/execute` accepts.
   {:initial-ctx {:env-var-xyz "value",
                  :remote-thing-params {:p1 "p1" :p2 "p2"}
                  :other-remote-thing-responses []}
+   :anomaly-handlers {"get-remote-thing" (fn [{:keys [anomaly]}]
+                                           (post-error-to-log-server anomaly))}
+   :exception-handlers {"get-remote-thing" (fn [{:keys [exception]}]
+                                              (js/console.log "An exception retrieving the remote thing occurred:" exception))}}
 
   [{:processor  :example.full/get-remote-thing
+    :name       "get-remote-thing"
     :path       [:remote-thing-response]}
 
    {:tap        :example.full/print-remote-thing}

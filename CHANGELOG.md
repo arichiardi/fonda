@@ -17,6 +17,7 @@ and this project adheres to [Semantic Versioning](http://semver.org/spec/v2.0.0.
 - Resolve qualified keywords to step functions. [#32](https://github.com/arichiardi/fonda/pull/32)
 - Make the name key for step optional and possibly a keyword. [#33](https://github.com/arichiardi/fonda/pull/33)
 - Injector steps that dynamically add steps [#34](https://github.com/arichiardi/fonda/pull/34)
+- Anomaly and exception handler maps [#40](https://github.com/arichiardi/fonda/pull/40)
 
 ### Removed
 

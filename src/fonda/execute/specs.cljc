@@ -15,12 +15,14 @@
 (s/def ::fonda-context-async some?)
 
 (s/def ::fonda-context-sync
-  (s/keys :req-un [::ctx
-                   ::on-success
-                   ::on-exception
+  (s/keys :req-un [::core/ctx
+                   ::core/on-success
+                   ::core/on-exception
                    ::queue
                    ::stack]
-          :opt-un [::on-anomaly
+          :opt-un [::core/anomaly-handlers
+                   ::core/exception-handlers
+                   ::core/on-anomaly
                    ::anomaly-fn
                    ::exception
                    ::anomaly]))
@@ -29,6 +31,9 @@
                              :sync ::fonda-context-sync))
 
 (s/fdef fonda.execute/execute-steps
+  :args (s/cat :fonda-ctx ::fonda-context))
+
+(s/fdef fonda.execute/execute-handlers
   :args (s/cat :fonda-ctx ::fonda-context))
 
 (s/fdef fonda.execute/deliver-result
@@ -47,7 +52,7 @@
   :args (s/cat :fonda-ctx ::fonda-context
                :res any?))
 
-(s/fdef assoc-injector-result
+(s/fdef fonda.execute/assoc-injector-result
   :args (s/cat :fonda-ctx ::fonda-context
                :res (s/or :step ::step/step
                           :step-coll (s/coll-of ::step/step))))
