@@ -171,7 +171,7 @@ See [CONTRIBUTING.md](./CONTRIBUTING.md).
 
 ## License
 
-Copyright 2019 Elastic Path
+Copyright 2018-2019, The Fonda [Authors](./AUTHORS)
 
 Licensed under the Apache License, Version 2.0 (the "License");
 you may not use this file except in compliance with the License.
