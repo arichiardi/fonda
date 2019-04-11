@@ -1,5 +1,3 @@
-<img src="https://www.elasticpath.com/sites/all/themes/bootstrap/images/elastlic-path-logo-RGB.svg" alt="elasticpath logo" title="elasticpath" align="right" width="150"/>
-
 # Fonda
 
 An async pipeline approach to functional core - imperative shell from by Gary Bernhardt's [Boundaries talk.](https://www.destroyallsoftware.com/talks/boundaries)
@@ -92,7 +90,7 @@ The following section describes the parameters `fonda/execute` accepts.
     | `:name` | Yes | The name of the step as string or keyword |
 
   - injector
-  
+
     | Key | Optional? | Notes |
     |---|---|---|
     | `:injector` | No | A function that gets the context and returns either a step or a collection of steps. The step(s) returned will be executed right after the injector step and just before the next steps. Can be asynchronous.
@@ -152,6 +150,13 @@ The following section describes the parameters `fonda/execute` accepts.
 
 ```
 
+## Thanks
+
+The conception of the library has taken place during early research and
+development work at [Elastic Path Software
+Inc.](https://www.elasticpath.com). A heart-felt thank you goes especially to
+[Matt Bishop](https://github.com/mattbishop) for supporting open source.
+
 ## Trivia
 
 The name got inspired by Jane Fonda's step very successful fitness programs.
@@ -166,7 +171,7 @@ See [CONTRIBUTING.md](./CONTRIBUTING.md).
 
 ## License
 
-Copyright 2018 Elastic Path
+Copyright 2019 Elastic Path
 
 Licensed under the Apache License, Version 2.0 (the "License");
 you may not use this file except in compliance with the License.

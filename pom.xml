@@ -2,16 +2,16 @@
 <project xmlns="http://maven.apache.org/POM/4.0.0" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 http://maven.apache.org/xsd/maven-4.0.0.xsd">
   <modelVersion>4.0.0</modelVersion>
 
-  <groupId>com.elasticpath</groupId>
+  <groupId>fonda</groupId>
   <artifactId>fonda</artifactId>
   <name>fonda</name>
   <version>1.0.0-SNAPSHOT</version>
   <description>An async pipeline approach to functional core - imperative shell.</description>
 
-  <url>https://github.com/elasticpath/fonda</url>
+  <url>https://github.com/arichiardi/fonda</url>
   <inceptionYear>2018</inceptionYear>
   <scm>
-    <url>https://github.com/elasticpath/fonda</url>
+    <url>https://github.com/arichiardi/fonda</url>
   </scm>
 
   <licenses>
@@ -26,21 +26,15 @@
     <developer>
       <name>Andrea Richiardi</name>
       <email>a.richiardi.work@gmail.com</email>
-      <organization>Elastic Path</organization>
-      <organizationUrl>http://www.elasticpath.com</organizationUrl>
     </developer>
     <developer>
       <name>David Cerezo Iñigo</name>
       <email>davidcerezoinigo@gmail.com</email>
-      <organization>Elastic Path</organization>
-      <organizationUrl>http://www.elasticpath.com</organizationUrl>
+    </developer>
+    <developer>
+      <name>Sebastian Schulz</name>
     </developer>
   </developers>
-
-  <organization>
-    <name>Elastic Path</name>
-    <url>http://www.elasticpath.com</url>
-  </organization>
 
   <build>
     <sourceDirectory>src</sourceDirectory>

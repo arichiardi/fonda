@@ -1,10 +1,8 @@
-<img src="https://www.elasticpath.com/sites/all/themes/bootstrap/images/elastlic-path-logo-RGB.svg" alt="elasticpath logo" title="elasticpath" align="right" width="150"/>
-
 ## Submitting a Pull Request (PR)
 
 Before you submit your Pull Request (PR) consider the following guidelines:
 
-* Search [GitHub](https://github.com/elasticpath/fonda/pulls) for
+* Search [GitHub](https://github.com/arichiardi/fonda/pulls) for
   an open or closed PR. You don't want to duplicate effort.
 
 * Create your patch **including appropriate test cases**.

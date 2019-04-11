@@ -1,18 +1,15 @@
 {
-  "name": "@ep-npm/fonda",
+  "name": "fonda",
   "version": "1.0.0-alpha.1",
   "description": "An async pipeline approach to functional core - imperative shell.",
   "license": "Unlicense",
-  "author": "Elastic Path Software",
   "contributors": [
-    "David Cerezo Iñigo <david.cerezoinigo@elasticpath.com>",
-    "Andrea Richiardi <andrea.richiardi@elasticpath.com>",
-    "Sebastian Schulz <sebastian.schulz@elasticpath.com>"
+    "David Cerezo Iñigo <davidcerezoinigo@gmail.com",
+    "Andrea Richiardi <a.richiardi.work@gmail.com>",
+    "Sebastian Schulz"
   ],
   "keywords": [
-    "elastic",
     "path",
-    "elasticpath",
     "clojurescript",
     "clojure",
     "async",
@@ -24,7 +21,7 @@
   ],
   "repository": {
     "type": "git",
-    "url": "https://github.com/elasticpath/fonda"
+    "url": "https://github.com/arichiardi/fonda"
   },
   "scripts": {
     "print-version": "echo $npm_package_version",

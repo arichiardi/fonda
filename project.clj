@@ -1,5 +1,5 @@
-(defproject com.elasticpath/fonda "1.0.0-SNAPSHOT"
-  :url "https://github.com/elasticpath/fonda"
+(defproject fonda "1.0.0-SNAPSHOT"
+  :url "https://github.com/arichiardi/fonda"
   :description "An async pipeline approach to functional core - imperative shell."
   :license {:name "Apache License"
             :url "http://www.apache.org/licenses/LICENSE-2.0"}
