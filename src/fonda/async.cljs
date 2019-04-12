@@ -14,4 +14,4 @@
     ([t f e]
      (-> t
          (.then f)
-         (.catch (fn [err] (e err)))))))
+         (.catch e)))))
