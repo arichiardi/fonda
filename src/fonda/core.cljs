@@ -12,10 +12,14 @@
   Each step function - tap or processor - can be synchronous or asynchronous.
 
   - config: A map with:
-      - [opt] anomaly?      A function that gets a map and determines if it is an anomaly.
-      - [opt] initial-ctx   The data that initializes the context. Must be a map.
+      - [opt] anomaly?           A function that gets a map and determines if it is an anomaly.
+      - [opt] initial-ctx        The data that initializes the context. Must be a map.
+      - [opt] anomaly-handlers   A map of functions indexed by step name that get called with a map
+                                 `{:ctx <ctx> :anomaly <anomaly>}` when the step returns an anomaly.
+      - [opt] exception-handlers A map of functions indexed by step name that get called with a map
+                                 `{:ctx <ctx> :exception <exception>}` when the step triggers an exception.
 
-  - steps: Each item on the `steps` collection must be either a Tap, or a Processor.
+  - steps: Each item on the `steps` collection must be either a Tap, a Processor, or an Injector
 
       Tap:
        - tap:  A function that gets the context but doesn't augment it.
@@ -44,4 +48,5 @@
                :on-success   on-success})
        (e/fonda-context)
        (e/execute-steps)
+       (e/execute-handlers)
        (e/deliver-result))))

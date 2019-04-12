@@ -67,10 +67,26 @@
       (if (or (not step) exception anomaly)
         fonda-ctx
         (recur
-         (-> fonda-ctx
-             (assoc :queue (pop queue))
-             (assoc :stack (conj stack step))
-             (try-step step)))))))
+          (-> fonda-ctx
+              (assoc :queue (pop queue))
+              (assoc :stack (conj stack step))
+              (try-step step)))))))
+
+(defn execute-handlers
+  "Executes the anomaly and exception handlers.
+
+  If the context has an anomaly, calls the anomaly handler of the step that returned the anomaly.
+  If the context has an exception, calls the exception handler of the step that triggered the exception"
+  [{:as fonda-ctx :keys [ctx exception anomaly exception-handlers anomaly-handlers stack]}]
+
+  (if (a/async? fonda-ctx)
+    (a/continue fonda-ctx execute-handlers)
+    (let [[handlers arg] (cond
+                           anomaly [anomaly-handlers {:ctx ctx :anomaly anomaly}]
+                           exception [exception-handlers {:ctx ctx :exception exception}])
+          handler-fn (get handlers (-> stack last :name))]
+      (when handler-fn (handler-fn arg))
+      fonda-ctx)))
 
 (defrecord FondaContext
   [;; A function that gets a map and determines if it is an anomaly
@@ -84,6 +100,14 @@
 
    ;; The anomaly returned by the latest failing step
    anomaly
+
+   ;; A map of functions indexed by step name that get called with a map `{:ctx <ctx> :anomaly <anomaly>}` when the step
+   ;; returns an anomaly.
+   anomaly-handlers
+
+   ;; A map of functions indexed by step name that get called with a map `{:ctx <ctx> :exception <exception>}` when the
+   ;; step triggers an exception.
+   exception-handlers
 
    ;; Callback function that gets called with the context after all the steps succeeded
    on-success
@@ -116,29 +140,30 @@
           "The :anomaly? key should be either nil, boolean or a function.")
 
   (cond
-    (true? anomaly?)  cognitect-anomaly?
+    (true? anomaly?) cognitect-anomaly?
     (false? anomaly?) nil
-    (some? anomaly?)  anomaly?
-    :else             nil))
+    (some? anomaly?) anomaly?
+    :else nil))
 
 (defn fonda-context
   "Build the run time \"Fonda\" context from the config.
 
   This function does config validation."
   [config]
-  (let [{:keys [anomaly? on-exception on-anomaly on-success steps]} config
+  (let [{:keys [anomaly? anomaly-handlers exception-handlers on-exception on-anomaly on-success steps]} config
         anomaly-fn (anomaly-fn anomaly?)]
-
     (assert (or (not anomaly-fn) (and anomaly-fn on-anomaly)) "When :anomaly? is truthy the on-anomaly callback is required.")
     (assert on-success "The on-success callback is required.")
     (assert on-exception "The on-exception callback is required.")
 
     (map->FondaContext
-     (merge {:on-anomaly   on-anomaly
-             :on-exception on-exception
-             :on-success   on-success}
-            (when anomaly-fn
-              {:anomaly-fn anomaly-fn})
-            {:ctx   (or (:initial-ctx config) {})
-             :queue (into #queue [] st/xf steps)
-             :stack []}))))
+      (merge {:anomaly-handlers   (clojure.walk/keywordize-keys anomaly-handlers)
+              :exception-handlers (clojure.walk/keywordize-keys exception-handlers)
+              :on-anomaly         on-anomaly
+              :on-exception       on-exception
+              :on-success         on-success}
+             (when anomaly-fn
+               {:anomaly-fn anomaly-fn})
+             {:ctx   (or (:initial-ctx config) {})
+              :queue (into #queue [] st/xf steps)
+              :stack []}))))
