@@ -104,7 +104,7 @@
             processor {:path      [:processor-path]
                        :name      "step1"
                        :processor (constantly processor-res)}
-            anomaly-handler-arg (atom)]
+            anomaly-handler-arg (atom nil)]
         (fonda/execute {:anomaly?         true
                         :anomaly-handlers {"step1" #(reset! anomaly-handler-arg (:anomaly %))}}
                        [processor]
@@ -115,13 +115,14 @@
                          (is (= processor-res anomaly)) (done)))))))
 
 (deftest one-unsuccessful-sync-tap-test
-  (testing "Passing one synchronous unsuccessful tap should call on-anomaly with the anomaly after calling the anomaly handler"
+  (testing "Passing one synchronous unsuccessful tap should call on-anomaly with the anomaly after calling the anomaly
+  handler, and passing step keyword"
     (async done
       (let [tap-res (anomaly :cognitect.anomalies/incorrect)
             tap {:path [:processor-path]
-                 :name "step1"
+                 :name :step1
                  :tap  (constantly tap-res)}
-            anomaly-handler-arg (atom)]
+            anomaly-handler-arg (atom nil)]
         (fonda/execute {:anomaly?         true
                         :anomaly-handlers {"step1" #(reset! anomaly-handler-arg (:anomaly %))}}
                        [tap]
@@ -133,15 +134,16 @@
                          (done)))))))
 
 (deftest one-unsuccessful-async-processor-test
-  (testing "Passing one asynchronous unsuccessful processor should call on-anomaly with the anomaly after calling the anomaly handler"
+  (testing "Passing one asynchronous unsuccessful processor should call on-anomaly with the anomaly after calling the
+  anomaly handler, using keywords for the handler keys"
     (async done
       (let [processor-res (anomaly :cognitect.anomalies/incorrect)
             processor {:path      [:processor-path]
                        :name      "step1"
                        :processor (constantly (js/Promise.resolve processor-res))}
-            anomaly-handler-arg (atom)]
+            anomaly-handler-arg (atom nil)]
         (fonda/execute {:anomaly?         true
-                        :anomaly-handlers {"step1" #(reset! anomaly-handler-arg (:anomaly %))}}
+                        :anomaly-handlers {:step1 #(reset! anomaly-handler-arg (:anomaly %))}}
                        [processor]
                        exception-cb-throw
                        success-cb-throw
@@ -158,8 +160,8 @@
             processor {:path      [:processor-path]
                        :name      "step1"
                        :processor (fn [_] (throw processor-res))}
-            exception-handler-arg (atom)]
-        (fonda/execute {:exception-handlers {"step1" #(reset! exception-handler-arg (:exception %))}}
+            exception-handler-arg (atom nil)]
+        (fonda/execute {:exception-handlers {:step1 #(reset! exception-handler-arg (:exception %))}}
                        [processor]
                        (fn [err]
                          (is (= @exception-handler-arg processor-res))
@@ -169,13 +171,13 @@
 
 (deftest one-exceptional-sync-tap-test
   (testing "Passing one synchronous exceptional tap should call on-exception with the exception after calling the
-  exception handler"
+  exception handler, using keywords for steps and handlers keys"
     (async done
       (let [tap-res (js/Error "Bad exception")
             tap {:tap  (fn [_] (throw tap-res))
-                 :name "step1"}
-            exception-handler-arg (atom)]
-        (fonda/execute {:exception-handlers {"step1" #(reset! exception-handler-arg (:exception %))}}
+                 :name :step1}
+            exception-handler-arg (atom nil)]
+        (fonda/execute {:exception-handlers {:step1 #(reset! exception-handler-arg (:exception %))}}
                        [tap]
                        (fn [err]
                          (is (= @exception-handler-arg tap-res))
@@ -191,7 +193,7 @@
             processor {:path      [:processor-path]
                        :name      "step1"
                        :processor (constantly (js/Promise.reject processor-res))}
-            exception-handler-arg (atom)]
+            exception-handler-arg (atom nil)]
         (fonda/execute {:exception-handlers {"step1" #(reset! exception-handler-arg (:exception %))}}
                        [processor]
                        (fn [err]
@@ -207,7 +209,7 @@
       (let [processor-res (js/Error "Bad exception")
             processor {:path      [:processor-path]
                        :processor (constantly (js/Promise.reject processor-res))}
-            exception-handler-arg (atom)]
+            exception-handler-arg (atom nil)]
         (fonda/execute {:exception-handlers {"step1" #(reset! exception-handler-arg (:exception %))}}
                        [processor]
                        (fn [err]
@@ -275,7 +277,7 @@
   (testing "When :anomaly is true and an anomaly occurs it should call on-anomaly after calling the anomaly handler"
     (async done
       (let [unsuccessful-anomaly (anomaly :cognitect.anomalies/incorrect)
-            anomaly-handler-arg (atom)]
+            anomaly-handler-arg (atom nil)]
         (fonda/execute {:anomaly?         true
                         :anomaly-handlers {"step2" #(reset! anomaly-handler-arg (:anomaly %))}}
                        [{:path      [:step1]
@@ -300,7 +302,7 @@
   handlers"
     (async done
       (let [successful-anomaly (anomaly :cognitect.anomalies/incorrect)
-            anomaly-handler-arg (atom)]
+            anomaly-handler-arg (atom nil)]
         (fonda/execute {:anomaly?         false
                         :anomaly-handlers {"step2" #(reset! anomaly-handler-arg (:anomaly %))}}
                        [{:path      [:step1]
@@ -330,7 +332,7 @@
       (let [unsuccessful-res (anomaly :cognitect.anomalies/incorrect)
             step1-counter (atom 0)
             step3-counter (atom 0)
-            anomaly-handler-arg (atom)]
+            anomaly-handler-arg (atom nil)]
         (fonda/execute {:anomaly?         true
                         :anomaly-handlers {"step2" #(reset! anomaly-handler-arg (:anomaly %))}}
                        [{:path      [:step1]
@@ -356,7 +358,7 @@
   (testing "When an exception occurs"
     (async done
       (let [exception (js/Error "Bad exception")
-            exception-handler-arg (atom)]
+            exception-handler-arg (atom nil)]
         (fonda/execute {:exception-handlers {"step2" #(reset! exception-handler-arg (:exception %))}}
                        [{:path      [:step1]
                          :processor (fn [_]

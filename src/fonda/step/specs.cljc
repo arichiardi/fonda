@@ -2,7 +2,13 @@
   (:require [clojure.spec.alpha :as s]))
 
 ;; Common for all steps
-(s/def ::name (s/nilable string?))
+#_(s/def ::name (s/nilable keyword?))
+
+;; Temporary added so the tests pass, I don't understand why the spec is not being
+;; properly merged from fonda.core.step.specs
+(s/def ::name (s/or :string (s/nilable string?)
+                    :keyword (s/nilable keyword?)))
+
 (s/def ::step-common
   (s/keys :opt-un [::name]))
 
@@ -27,3 +33,5 @@
   (s/or :tap-step ::tap-step
         :processor-step ::processor-step
         :injector-step ::injector-step))
+
+(s/def ::steps (s/coll-of ::step))

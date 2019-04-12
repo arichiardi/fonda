@@ -152,14 +152,13 @@
   [config]
   (let [{:keys [anomaly? anomaly-handlers exception-handlers on-exception on-anomaly on-success steps]} config
         anomaly-fn (anomaly-fn anomaly?)]
-
     (assert (or (not anomaly-fn) (and anomaly-fn on-anomaly)) "When :anomaly? is truthy the on-anomaly callback is required.")
     (assert on-success "The on-success callback is required.")
     (assert on-exception "The on-exception callback is required.")
 
     (map->FondaContext
-      (merge {:anomaly-handlers   anomaly-handlers
-              :exception-handlers exception-handlers
+      (merge {:anomaly-handlers   (clojure.walk/keywordize-keys anomaly-handlers)
+              :exception-handlers (clojure.walk/keywordize-keys exception-handlers)
               :on-anomaly         on-anomaly
               :on-exception       on-exception
               :on-success         on-success}

@@ -18,6 +18,7 @@ and this project adheres to [Semantic Versioning](http://semver.org/spec/v2.0.0.
 - Make the name key for step optional and possibly a keyword. [#33](https://github.com/arichiardi/fonda/pull/33)
 - Injector steps that dynamically add steps [#34](https://github.com/arichiardi/fonda/pull/34)
 - Anomaly and exception handler maps [#40](https://github.com/arichiardi/fonda/pull/40)
+- Steps names and handlers keys can be either strings or keywords [#40](https://github.com/arichiardi/fonda/pull/40)
 
 ### Removed
 

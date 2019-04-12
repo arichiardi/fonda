@@ -20,11 +20,11 @@
    path])
 
 (defrecord Injector
-   [;; Function that returns step(s) to be injected  right after this step on the queue
-    inject
+  [;; Function that returns step(s) to be injected  right after this step on the queue
+   inject
 
-    ;; Name for the step
-    name])
+   ;; Name for the step
+   name])
 
 (defn resolve-function
   [fn-or-keyword]
@@ -34,11 +34,13 @@
 
 (defn step->record
   [{:keys [tap processor inject] :as step}]
-  (cond
-    tap (map->Tap (update step :tap resolve-function))
-    processor (map->Processor (update step :processor resolve-function))
-    inject (map->Injector (update step :inject resolve-function))))
+  (let [step
+        (cond
+          tap (map->Tap (update step :tap resolve-function))
+          processor (map->Processor (update step :processor resolve-function))
+          inject (map->Injector (update step :inject resolve-function)))]
+    (update step :name keyword)))
 
 (def ^{:doc "Step transducer."}
-  xf
+xf
   (map step->record))
