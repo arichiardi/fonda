@@ -7,17 +7,37 @@
    tap
 
    ;; The name for the step
-   name])
+   name
+
+   on-start
+
+   on-success
+
+   on-error
+
+   on-complete
+   ])
 
 (defrecord Processor
   [;; A function that gets the context, the result is attached to the context on the given path
-   processor
+   fn
 
    ;; Name for the step
    name
 
    ;; Path were to attach the processor result on the context
-   path])
+   path
+
+   on-start
+
+   on-success
+
+   on-error
+
+   on-complete
+
+   is-anomaly-error?
+   ])
 
 (defrecord Injector
   [;; Function that returns step(s) to be injected  right after this step on the queue
@@ -33,14 +53,14 @@
     fn-or-keyword))
 
 (defn step->record
-  [{:keys [tap processor inject] :as step}]
+  [{:keys [tap inject fn processor] :as step}]
   (let [step
         (cond
           tap (map->Tap (update step :tap resolve-function))
-          processor (map->Processor (update step :processor resolve-function))
+          (or processor fn) (map->Processor (-> step
+                                                (update :fn resolve-function)
+                                                (assoc :is-anomaly-error? (or (:is-anomaly-error? step) (constantly true)))))
           inject (map->Injector (update step :inject resolve-function)))]
     (update step :name keyword)))
 
-(def ^{:doc "Step transducer."}
-xf
-  (map step->record))
+(def ^{:doc "Step transducer."} xf (map step->record))
