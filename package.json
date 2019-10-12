@@ -1,10 +1,10 @@
 {
-  "name": "fonda",
-  "version": "1.0.0-alpha.1",
+  "name": "@elchache/fonda",
+  "version": "0.0.1",
   "description": "An async pipeline approach to functional core - imperative shell.",
   "license": "Unlicense",
   "contributors": [
-    "David Cerezo Iñigo <davidcerezoinigo@gmail.com",
+    "David Cerezo Iñigo <dcerezoi@protonmail.com",
     "Andrea Richiardi <a.richiardi.work@gmail.com>",
     "Sebastian Schulz"
   ],
@@ -21,7 +21,7 @@
   ],
   "repository": {
     "type": "git",
-    "url": "https://github.com/arichiardi/fonda"
+    "url": "https://github.com/ElChache/fonda"
   },
   "scripts": {
     "print-version": "echo $npm_package_version",
@@ -29,12 +29,10 @@
     "watch": "yarn shadow-cljs watch lib",
     "build": "yarn shadow-cljs release lib",
     "test": "yarn shadow-cljs release test && node dist/test.js",
-    "test:watch": "yarn shadow-cljs watch test",
-    "deploy:release": "make clean && make jar && scripts/prepare-release && scripts/deploy-jar -j ./fonda.jar",
-    "deploy:snapshot": "make clean && make jar && scripts/prepare-release --snapshot -s && scripts/deploy-jar -j fonda.jar"
+    "test:watch": "yarn shadow-cljs watch test"
   },
   "devDependencies": {
-    "shadow-cljs": "2.8.15"
+    "shadow-cljs": "2.8.59"
   },
   "dependencies": {}
 }

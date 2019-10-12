@@ -13,7 +13,9 @@
 
   - config: A map with:
       - [opt] anomaly?           A function that gets a map and determines if it is an anomaly.
-      - [opt] initial-ctx        The data that initializes the context. Must be a map.
+      - [opt] ctx                The data that initializes the context. Must be a map.
+      - [opt] mock-fns           A map of functions that will replace the function on the step, matching the map
+                                 key with the step name
       - [opt] anomaly-handlers   A map of functions indexed by step name that get called with a map
                                  `{:ctx <ctx> :anomaly <anomaly>}` when the step returns an anomaly.
       - [opt] exception-handlers A map of functions indexed by step name that get called with a map
@@ -26,9 +28,9 @@
        - name: The name of the step
 
       Processor:
-       - processor: A function that gets the context and assocs the result into it on the given path
-       - path:     Path where to assoc the result of the processor
-       - name:     The name of the step
+       - [processor] or [fn]: A function that gets the context and assocs the result into it on the given path
+       - path:                Path where to assoc the result of the processor
+       - name:                The name of the step
 
       Injector:
        - inject: A function that gets the context and returns either a step or a collection of them.

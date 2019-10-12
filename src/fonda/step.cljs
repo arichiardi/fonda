@@ -11,7 +11,7 @@
 
 (defrecord Processor
   [;; A function that gets the context, the result is attached to the context on the given path
-   processor
+   fn
 
    ;; Name for the step
    name
@@ -33,11 +33,11 @@
     fn-or-keyword))
 
 (defn step->record
-  [{:keys [tap processor inject] :as step}]
+  [{:keys [tap inject] :as step}]
   (let [step
         (cond
           tap (map->Tap (update step :tap resolve-function))
-          processor (map->Processor (update step :processor resolve-function))
+          (:fn step) (map->Processor (update step :fn resolve-function))
           inject (map->Injector (update step :inject resolve-function)))]
     (update step :name keyword)))
 
