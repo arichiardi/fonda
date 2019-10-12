@@ -8,9 +8,9 @@
 
 ;; Processor step
 (s/def ::path vector?)
-(s/def ::processor (s/or :function fn? :qualified-keyword qualified-keyword?))
+(s/def ::fn (s/or :function fn? :qualified-keyword qualified-keyword?))
 (s/def ::processor-step
-  (s/keys :req-un [::processor ::path]))
+  (s/keys :req-un [::fn ::path]))
 
 ;; Injector step
 (s/def ::inject (s/or :function fn? :qualified-keyword qualified-keyword?))

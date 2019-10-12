@@ -509,20 +509,20 @@ sha.js@^2.4.0, sha.js@^2.4.8:
     inherits "^2.0.1"
     safe-buffer "^5.0.1"
 
-shadow-cljs-jar@1.3.0:
-  version "1.3.0"
-  resolved "https://registry.yarnpkg.com/shadow-cljs-jar/-/shadow-cljs-jar-1.3.0.tgz#e25c4fa57c0b405096250884b164c112654a06a3"
-  integrity sha512-KReNVgFVM2ZPPGCP8rsCPqtlee/+SwXyoeEqbAXBO7jlpoNnNee2x4fiRg/Pr/vXGEkV/Ez5l4qdNSU1Na+1Jg==
+shadow-cljs-jar@1.3.1:
+  version "1.3.1"
+  resolved "https://registry.yarnpkg.com/shadow-cljs-jar/-/shadow-cljs-jar-1.3.1.tgz#a5f8ab7664b40e11345837e4c6bce8e0ac9b2cc3"
+  integrity sha512-IJSm4Gfu/wWDsOQ0wNrSxuaGdjzsd78us+3bop3cpWsoO2Igdu6VIBItYrZHRRBKl5LIZKXfnSh/2eWG3C1EFw==
 
-shadow-cljs@2.8.15:
-  version "2.8.15"
-  resolved "https://registry.yarnpkg.com/shadow-cljs/-/shadow-cljs-2.8.15.tgz#304cbafe5f196a9e6ff792d11872f15e380ac0ea"
-  integrity sha512-L51AgzxgwRVGT85d7XXIAtoIQ9yrW0XYvrR8iyf4o/A5BPR9ocxudnxIuIz4syE5VcbSdWvYnv00EYh0vs2AJg==
+shadow-cljs@2.8.59:
+  version "2.8.59"
+  resolved "https://registry.yarnpkg.com/shadow-cljs/-/shadow-cljs-2.8.59.tgz#41de7c44bdf8e835f3c7dc19e415732e6cada844"
+  integrity sha512-b419+WQxTB7Nnr6n5Bqh1G7mC3+jfye5ZJAK000HBThbYjVFw1nskzS3vOMs3neHRcX8fwBKgM5k652pNHD+6g==
   dependencies:
     mkdirp "^0.5.1"
     node-libs-browser "^2.0.0"
     readline-sync "^1.4.7"
-    shadow-cljs-jar "1.3.0"
+    shadow-cljs-jar "1.3.1"
     source-map-support "^0.4.15"
     which "^1.3.1"
     ws "^3.0.0"
