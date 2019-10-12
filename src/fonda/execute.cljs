@@ -42,12 +42,37 @@
       (assoc :exception e)
       (update :processor-results-stack conj e)))
 
+(defn handle-exception
+  [{:as fonda-ctx :keys [ctx]} {:keys [on-error] :as step} e]
+  (when on-error (on-error e ctx))
+  (assoc-exception-result fonda-ctx e))
+
+(defn invoke-post-callback-fns
+  [{:as fonda-ctx :keys [anomaly-fn ctx]} {:keys [on-complete on-success on-error path] :as step} step-res]
+
+  (let [aug-ctx (if path (assoc-in ctx path step-res) ctx)]
+
+    ;; Always calls on-complete
+    (when on-complete
+      (on-complete step-res aug-ctx))
+
+    (if (and anomaly-fn (anomaly-fn step-res))
+
+      ;; If anomaly, calls on-error
+      (when on-error (on-error step-res aug-ctx))
+
+      ;; Otherwise calls on-success
+      (when on-success (on-success step-res aug-ctx)))))
+
 (defn- try-step
   "Tries running the given step (a tap step, or a processor step).
   If an exception gets triggerd, an exception is added on the context.
   If an anomaly is returned, an anomaly is added to the context"
   [{:as fonda-ctx :keys [ctx mock-fns processor-results-stack]}
-   {:as step :keys [processor tap inject name]}]
+   {:as step :keys [processor tap inject name on-start]}]
+
+  ;; Calls the on-start callback with the context
+  (when on-start (on-start ctx))
   (try
     (let [last-res (last processor-results-stack)
 
@@ -65,12 +90,16 @@
                             tap (partial assoc-tap-result fonda-ctx)
                             processor (partial assoc-processor-result fonda-ctx (:path step))
                             inject (partial assoc-injector-result fonda-ctx))]
+
+      ;; Invokes the callback functions
+      (invoke-post-callback-fns fonda-ctx step res)
+
       (if (a/async? res)
-        (a/continue res assoc-result-fn #(assoc-exception-result fonda-ctx %))
+        (a/continue res assoc-result-fn #(handle-exception fonda-ctx step %))
         (assoc-result-fn res)))
 
     (catch :default e
-      (assoc-exception-result fonda-ctx e))))
+      (handle-exception fonda-ctx step e))))
 
 (defn- deliver-result
   "Calls a callback depending on what is on the context.

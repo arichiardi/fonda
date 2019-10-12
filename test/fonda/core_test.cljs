@@ -1,11 +1,23 @@
 (ns fonda.core-test
-  (:require [cljs.test :refer-macros [deftest is testing async]]
+  (:require [cljs.test :refer-macros [deftest is testing async use-fixtures]]
             [fonda.core :as fonda]
             [fonda.core.specs]
             [fonda.execute.specs]
             [orchestra-cljs.spec.test :as orchestra]))
 
 (orchestra/instrument)
+
+(def events (atom []))
+(defn cb-with-result [event]
+  (fn [result ctx]
+    (swap! events conj [event result ctx])))
+
+(defn cb-no-result [event]
+  (fn [ctx]
+    (swap! events conj [event ctx])))
+
+
+(use-fixtures :each {:before (fn [] (reset! events []))})
 
 (defn success-cb-throw [res ctx]
   (throw (js/Error (str "unexpected success callback called with res:" res " and ctx:" ctx))))
@@ -30,6 +42,7 @@
                      []
                      exception-cb-throw
                      (fn [res ctx]
+                       (is (= @events []))
                        (is (= {} ctx))
                        (done))))))
 
@@ -49,13 +62,15 @@
     (async done
       (let [processor-res 42
             processor-path [:processor-path]
-            processor {:path processor-path
+            processor {:on-success (cb-with-result ::auth-success)
+                       :path processor-path
                        :fn (constantly processor-res)}]
         (fonda/execute {}
                        [processor]
                        exception-cb-throw
                        (fn [res ctx]
                          (is (= processor-res (get-in ctx processor-path)))
+                         (is (= @events [[::auth-success processor-res {:processor-path processor-res}]]))
                          (done)))))))
 
 (deftest one-successful-sync-processor-with-no-path-doesnt-contribute-to-ctx-test
@@ -63,13 +78,15 @@
     (async done
       (let [initial-ctx {:initial "value"}
             processor-res 42
-            processor {:fn (constantly processor-res)}]
+            processor {:fn (constantly processor-res)
+                       :on-complete (cb-with-result ::complete)}]
         (fonda/execute {:ctx initial-ctx}
                        [processor]
                        exception-cb-throw
                        (fn [res ctx]
                          (is (= res processor-res))
                          (is (= ctx initial-ctx))
+                         (is (= @events [[::complete processor-res initial-ctx]]))
                          (done)))))))
 
 (deftest one-successful-sync-mocked-processor-test
@@ -81,11 +98,13 @@
             processor {:path processor-path
                        :fn (constantly processor-res)
                        :name ::step-1
-                       }]
+                       :on-start (cb-no-result ::start)}]
         (fonda/execute {:mock-fns {::step-1 (constantly mocked-processor-res)}}
                        [processor]
                        exception-cb-throw
                        (fn [res ctx]
+                         ;; The on-start callback was called before the step, with the initial ctx
+                         (is (= @events [[::start {}]]))
                          (is (= mocked-processor-res (get-in ctx processor-path)))
                          (done)))))))
 
@@ -179,7 +198,8 @@
       (let [processor-res (anomaly :cognitect.anomalies/incorrect)
             processor {:path      [:processor-path]
                        :name      "step1"
-                       :fn (constantly processor-res)}
+                       :fn (constantly processor-res)
+                       :on-error (cb-with-result ::error)}
             anomaly-handler-arg (atom nil)]
         (fonda/execute {:anomaly?         true
                         :anomaly-handlers {"step1" #(reset! anomaly-handler-arg (:anomaly %))}}
@@ -188,7 +208,9 @@
                        (fn [_])
                        (fn [anomaly]
                          (is (= @anomaly-handler-arg processor-res))
-                         (is (= processor-res anomaly)) (done)))))))
+                         (is (= processor-res anomaly))
+                         (is (= @events [[::error anomaly {:processor-path anomaly}]]))
+                         (done)))))))
 
 (deftest one-unsuccessful-sync-processor-with-no-path-test
   (testing "Passing one synchronous unsuccessful processor should call on-anomaly with the anomaly after calling the anomaly-handler"
