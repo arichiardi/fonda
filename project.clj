@@ -1,4 +1,4 @@
-(defproject elchache/fonda "0.0.1"
+(defproject elchache/fonda "0.0.2-SNAPSHOT"
   :url "https://github.com/arichiardi/fonda"
   :description "An async pipeline approach to functional core - imperative shell."
   :license {:name "Apache License"

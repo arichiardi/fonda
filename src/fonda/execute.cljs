@@ -16,11 +16,13 @@
             anomaly? (update :processor-results-stack conj res))))
 
 (defn assoc-processor-result
-  [{:as fonda-ctx :keys [anomaly-fn]} path res]
+  [{:as fonda-ctx :keys [anomaly-fn]}
+   {:keys [path is-anomaly-error?]}
+   res]
   (let [new-fonda-ctx (cond
 
                         ;; If it is an anomaly, associates the anomaly on the context, and execution will stop here
-                        (and anomaly-fn (anomaly-fn res)) (assoc fonda-ctx :anomaly res)
+                        (and anomaly-fn (anomaly-fn res) (is-anomaly-error? res)) (assoc fonda-ctx :anomaly res)
 
                         ;; If there is no path on the step, it doesn't contribute to the context
                         (nil? path) fonda-ctx
@@ -48,7 +50,9 @@
   (assoc-exception-result fonda-ctx e))
 
 (defn invoke-post-callback-fns
-  [{:as fonda-ctx :keys [anomaly-fn ctx]} {:keys [on-complete on-success on-error path] :as step} step-res]
+  [{:as fonda-ctx :keys [anomaly-fn ctx]}
+   {:keys [on-complete on-success on-error path is-anomaly-error?] :as step}
+   step-res]
 
   (let [aug-ctx (if path (assoc-in ctx path step-res) ctx)]
 
@@ -56,7 +60,7 @@
     (when on-complete
       (on-complete step-res aug-ctx))
 
-    (if (and anomaly-fn (anomaly-fn step-res))
+    (if (and anomaly-fn (anomaly-fn step-res) #_(is-anomaly-error? step-res))
 
       ;; If anomaly, calls on-error
       (when on-error (on-error step-res aug-ctx))
@@ -88,7 +92,7 @@
           res (apply f args)
           assoc-result-fn (cond
                             tap (partial assoc-tap-result fonda-ctx)
-                            processor (partial assoc-processor-result fonda-ctx (:path step))
+                            processor (partial assoc-processor-result fonda-ctx step)
                             inject (partial assoc-injector-result fonda-ctx))]
 
       ;; Invokes the callback functions

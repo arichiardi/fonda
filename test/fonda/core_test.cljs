@@ -532,6 +532,40 @@
                              "it should not call the previous but not the subsequent steps")
                          (done)))))))
 
+(deftest multiple-steps-one-not-breaking-anomaly
+  (testing "When :anomaly is true and an anomaly occurs, and the anomaly is not breaking, it shouldn't short-circuit"
+    (async done
+      (let [unsuccessful-res (anomaly :cognitect.anomalies/incorrect)
+            step1-counter (atom 0)
+            step3-atom (atom nil)
+            anomaly-handler-arg (atom nil)]
+        (fonda/execute {:anomaly?         true
+                        :anomaly-handlers {"step2" #(reset! anomaly-handler-arg (:anomaly %))}}
+                       [{:path      [:step1]
+                         :fn (fn [_]
+                               (js/Promise.resolve (swap! step1-counter inc)))}
+
+                        {:path      [:step2]
+                         :name      "step2"
+                         :fn (fn [_] unsuccessful-res)
+                         :is-anomaly-error? (fn [a] false #_(not= a unsuccessful-res))}
+
+                        {:path      [:step3]
+                         :fn (fn [a _]
+                               (reset! step3-atom a)
+                               "not anomaly result")}]
+
+                       exception-cb-throw
+                       (fn [res]
+                         (is (nil? @anomaly-handler-arg)
+                             "The on-anomaly callback should not be called")
+                         (is (= 1 @step1-counter)
+                             "it should have called the previous step")
+                         (is (= unsuccessful-res @step3-atom)
+                             "it should also call the step after the not-error anomaly with the anomaly")
+                         (done))
+                       anomaly-cb-throw)))))
+
 (deftest multiple-steps-one-exceptional-calls-on-exception-test
   (testing "When an exception occurs"
     (async done
@@ -738,7 +772,6 @@
 
 (deftest lonely-injector-with-multiple-steps
   (testing "Only one injector on the steps"
-    (println "gonna test?")
     (async done
       (fonda/execute {:ctx {:steps []}}
                      [{:inject (fn [_]
