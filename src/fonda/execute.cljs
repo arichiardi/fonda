@@ -47,6 +47,7 @@
 (defn handle-exception
   [{:as fonda-ctx :keys [ctx]} {:keys [on-error] :as step} e]
   (when on-error (on-error e ctx))
+  (when (:name step) (println "Exception on step " (:name step)))
   (assoc-exception-result fonda-ctx e))
 
 (defn invoke-post-callback-fns
@@ -81,7 +82,7 @@
     (let [last-res (last processor-results-stack)
 
           ;; First step only gets the ctx, next ones receive last-result,ctx
-          args (if (empty? processor-results-stack) [ctx] [last-res ctx])
+          args (if (empty? processor-results-stack) [ctx] [ctx last-res])
 
           ; fn is an alias for processor
           processor (or processor (:fn step))
@@ -116,7 +117,7 @@
     (let [[cb result] (cond exception [(:on-exception fonda-ctx) exception]
                             anomaly [(:on-anomaly fonda-ctx) anomaly]
                             :else [(:on-success fonda-ctx) ctx])]
-      (cb (last processor-results-stack) result))))
+      (cb result (last processor-results-stack)))))
 
 (defn execute-steps
   "Sequentially runs each of the steps.

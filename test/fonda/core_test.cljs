@@ -41,7 +41,7 @@
       (fonda/execute {}
                      []
                      exception-cb-throw
-                     (fn [res ctx]
+                     (fn [ctx res]
                        (is (= @events []))
                        (is (= {} ctx))
                        (done))))))
@@ -53,7 +53,7 @@
         (fonda/execute {:ctx initial}
                        []
                        exception-cb-throw
-                       (fn [res ctx]
+                       (fn [ctx res]
                          (is (= initial ctx))
                          (done)))))))
 
@@ -68,7 +68,7 @@
         (fonda/execute {}
                        [processor]
                        exception-cb-throw
-                       (fn [res ctx]
+                       (fn [ctx res]
                          (is (= processor-res (get-in ctx processor-path)))
                          (is (= @events [[::auth-success processor-res {:processor-path processor-res}]]))
                          (done)))))))
@@ -83,7 +83,7 @@
         (fonda/execute {:ctx initial-ctx}
                        [processor]
                        exception-cb-throw
-                       (fn [res ctx]
+                       (fn [ctx res]
                          (is (= res processor-res))
                          (is (= ctx initial-ctx))
                          (is (= @events [[::complete processor-res initial-ctx]]))
@@ -102,7 +102,7 @@
         (fonda/execute {:mock-fns {::step-1 (constantly mocked-processor-res)}}
                        [processor]
                        exception-cb-throw
-                       (fn [res ctx]
+                       (fn [ctx res]
                          ;; The on-start callback was called before the step, with the initial ctx
                          (is (= @events [[::start {}]]))
                          (is (= mocked-processor-res (get-in ctx processor-path)))
@@ -117,7 +117,7 @@
         (fonda/execute {:ctx initial}
                        [tap]
                        exception-cb-throw
-                       (fn [res ctx]
+                       (fn [ctx res]
                          (is (= initial ctx))
                          (done)))))))
 
@@ -139,7 +139,7 @@
       (let [initial {:foo :bar}
             prev-step-res 42
             prev-step {:fn (constantly prev-step-res)}
-            tap {:tap (fn [step-res ctx]
+            tap {:tap (fn [ctx step-res]
                         (is (= step-res prev-step-res))
                         (is (= ctx initial))
                         (done))}]
@@ -172,7 +172,7 @@
         (fonda/execute {}
                        [processor]
                        exception-cb-throw
-                       (fn [res ctx]
+                       (fn [ctx res]
                          (is (= processor-res (get-in ctx processor-path)))
                          (done)))))))
 
@@ -188,7 +188,7 @@
         (fonda/execute {:mock-fns {::step-1 (constantly (js/Promise.resolve mocked-processor-res))}}
                        [processor]
                        exception-cb-throw
-                       (fn [res ctx]
+                       (fn [ctx res]
                          (is (= mocked-processor-res (get-in ctx processor-path)))
                          (done)))))))
 
@@ -358,9 +358,9 @@
             step2-fn inc]
         (fonda/execute {}
                        [{:path [:step1] :fn (constantly step1-val)}
-                        {:path [:step2] :fn (fn [_ {:keys [step1]}] (step2-fn step1))}]
+                        {:path [:step2] :fn (fn [{:keys [step1]} _] (step2-fn step1))}]
                        exception-cb-throw
-                       (fn [res ctx]
+                       (fn [ctx res]
                          (is (= ctx {:step1 step1-val
                                      :step2 (step2-fn step1-val)}))
                          (done)))))))
@@ -372,9 +372,9 @@
             step2-fn inc]
         (fonda/execute {}
                        [{:path [:step1] :fn (constantly step1-val)}
-                        {:path [:step2] :fn (fn [step1 _] (step2-fn step1))}]
+                        {:path [:step2] :fn (fn [_ step1] (step2-fn step1))}]
                        exception-cb-throw
-                       (fn [step2 _]
+                       (fn [_ step2]
                          (is (= step2 (step2-fn step1-val)))
                          (done)))))))
 
@@ -386,9 +386,9 @@
         (fonda/execute {}
                        [{:path [:step1] :fn (constantly step1-val)}
                         {:tap (constantly "tap-res")}
-                        {:path [:step2] :fn (fn [step1 _] (step2-fn step1))}]
+                        {:path [:step2] :fn (fn [_ step1] (step2-fn step1))}]
                        exception-cb-throw
-                       (fn [step2 _]
+                       (fn [_ step2]
                          (is (= step2 (step2-fn step1-val)))
                          (done)))))))
 
@@ -401,10 +401,10 @@
                        [{:path      [:step1]
                          :fn (constantly (js/Promise.resolve step1-val))}
                         {:path      [:step2]
-                         :fn (fn [_ {:keys [step1]}]
+                         :fn (fn [{:keys [step1]} _]
                                       (js/Promise.resolve (step2-fn step1)))}]
                        exception-cb-throw
-                       (fn [res ctx]
+                       (fn [ctx res]
                          (is (= ctx {:step1 step1-val
                                      :step2 (step2-fn step1-val)}))
                          (done)))))))
@@ -418,10 +418,10 @@
                        [{:path      [:step1]
                          :fn (constantly (js/Promise.resolve step1-val))}
                         {:path      [:step2]
-                         :fn (fn [step1 _]
+                         :fn (fn [_ step1]
                                (js/Promise.resolve (step2-fn step1)))}]
                        exception-cb-throw
-                       (fn [res ctx]
+                       (fn [ctx res]
                          (is (= res (step2-fn step1-val)))
                          (is (= ctx {:step1 step1-val
                                      :step2 (step2-fn step1-val)}))
@@ -438,13 +438,13 @@
                        [{:path      [:step1]
                          :fn (constantly (js/Promise.resolve step1-val))}
                         {:path      [:step2]
-                         :fn (fn [step1 _]
+                         :fn (fn [_ step1]
                                       (step2-fn step1))}
                         {:path      [:step3]
-                         :fn (fn [step2 _]
+                         :fn (fn [_ step2]
                                       (step3-fn step2))}]
                        exception-cb-throw
-                       (fn [step3 ctx]
+                       (fn [ctx step3]
                          (let [step3-res (-> step1-val (step2-fn) (step3-fn))]
                            (is (= step3 step3-res))
                            (is (= ctx {:step1 step1-val
@@ -494,7 +494,7 @@
                         {:path      [:step3]
                          :fn (constantly 3)}]
                        exception-cb-throw
-                       (fn [res ctx]
+                       (fn [ctx res]
                          (is (nil? @anomaly-handler-arg))
                          (is (= {:step1 1
                                  :step2 successful-anomaly
@@ -550,10 +550,10 @@
                          :fn (fn [_] unsuccessful-res)
                          :is-anomaly-error? (fn [a] false #_(not= a unsuccessful-res))}
 
-                        {:path      [:step3]
-                         :fn (fn [a _]
-                               (reset! step3-atom a)
-                               "not anomaly result")}]
+                        {:path [:step3]
+                         :fn   (fn [_ a]
+                                 (reset! step3-atom a)
+                                 "not anomaly result")}]
 
                        exception-cb-throw
                        (fn [res]
@@ -644,15 +644,15 @@
                       {:inject (fn [_]
                                  {:path      [:steps]
                                   :name      "injected-step"
-                                  :fn (fn [_ {:keys [steps]}]
+                                  :fn (fn [{:keys [steps]} _]
                                                (conj steps :injected-step))})
                        :name   "injector1"}
                       {:path      [:steps]
                        :name      "processor2"
-                       :fn (fn [_ {:keys [steps]}]
+                       :fn (fn [{:keys [steps]} _]
                                     (conj steps :step2))}]
                      exception-cb-throw
-                     (fn [res ctx] (is (= ctx {:steps [:step1 :injected-step :step2]})) (done))
+                     (fn [ctx res] (is (= ctx {:steps [:step1 :injected-step :step2]})) (done))
                      anomaly-cb-throw))))
 
 (deftest injector-should-receive-prev-step-res-and-ctx
@@ -663,20 +663,20 @@
                        :name      "processor1"
                        :fn (fn [{:keys [steps]}]
                              (conj steps :step1))}
-                      {:inject (fn [step1 ctx]
+                      {:inject (fn [ctx step1]
                                  (is (= step1 [:step1]))
                                  (is (= ctx {:steps [:step1]}))
                                  {:path [:steps]
                                   :name "injected-step"
-                                  :fn   (fn [_ {:keys [steps]}]
+                                  :fn   (fn [{:keys [steps]} _]
                                           (conj steps :injected-step))})
                        :name   "injector1"}
                       {:path      [:steps]
                        :name      "processor2"
-                       :fn (fn [_ {:keys [steps]}]
+                       :fn (fn [{:keys [steps]} _]
                              (conj steps :step2))}]
                      exception-cb-throw
-                     (fn [res ctx] (is (= ctx {:steps [:step1 :injected-step :step2]})) (done))
+                     (fn [ctx res] (is (= ctx {:steps [:step1 :injected-step :step2]})) (done))
                      anomaly-cb-throw))))
 
 (deftest injected-steps-should-run-after-injector
@@ -690,19 +690,19 @@
                       {:inject (fn [_]
                                  [{:path      [:steps]
                                    :name      "injected-step1"
-                                   :fn (fn [_ {:keys [steps]}]
+                                   :fn (fn [{:keys [steps]} _]
                                                 (conj steps :injected-step1))}
                                   {:path      [:steps]
                                    :name      "injected-step2"
-                                   :fn (fn [_ {:keys [steps]}]
+                                   :fn (fn [{:keys [steps]} _]
                                                 (conj steps :injected-step2))}])
                        :name   "injector1"}
                       {:path      [:steps]
                        :name      "processor2"
-                       :fn (fn [_ {:keys [steps]}]
+                       :fn (fn [{:keys [steps]} _]
                                     (conj steps :step2))}]
                      exception-cb-throw
-                     (fn [res ctx] (is (= ctx {:steps [:step1 :injected-step1 :injected-step2 :step2]})) (done))
+                     (fn [ctx res] (is (= ctx {:steps [:step1 :injected-step1 :injected-step2 :step2]})) (done))
                      anomaly-cb-throw))))
 
 (deftest injected-steps-using-prev-step-res-should-run-after-injector
@@ -713,27 +713,27 @@
                        :fn (fn [{:keys [steps]}]
                              (conj steps :step1))}
                       {:inject (fn [_]
-                                 [{:name      "injected-step1"
-                                   :fn (fn [steps _]
-                                         (conj steps :injected-step1))}
-                                  {:name      "injected-step2"
-                                   :fn (fn [steps _]
-                                         (conj steps :injected-step2))}])
+                                 [{:name "injected-step1"
+                                   :fn   (fn [_ steps]
+                                           (conj steps :injected-step1))}
+                                  {:name "injected-step2"
+                                   :fn   (fn [_ steps]
+                                           (conj steps :injected-step2))}])
                        :name   "injector1"}
-                      {:name      "processor2"
-                       :fn (fn [steps _]
-                             (conj steps :step2))}]
+                      {:name "processor2"
+                       :fn   (fn [_ steps]
+                               (conj steps :step2))}]
                      exception-cb-throw
-                     (fn [res _]
-                       (is (= res [:step1 :injected-step1 :injected-step2 :step2])) (done))
+                     (fn [_ steps]
+                       (is (= steps [:step1 :injected-step1 :injected-step2 :step2])) (done))
                      anomaly-cb-throw))))
 
 (deftest injected-mocked-steps-should-run-after-injector
   (testing "Injected steps are also mocked when injecting multiple steps"
     (async done
       (fonda/execute {:ctx {:steps []}
-                      :mock-fns {:injected-step1 (fn [_ {:keys [steps]}] (conj steps :mocked-injected-step1))
-                                 :injected-step2 (fn [_ {:keys [steps]}] (conj steps :mocked-injected-step2))}}
+                      :mock-fns {:injected-step1 (fn [{:keys [steps]} _] (conj steps :mocked-injected-step1))
+                                 :injected-step2 (fn [{:keys [steps]} _] (conj steps :mocked-injected-step2))}}
                      [{:path      [:steps]
                        :name      "processor1"
                        :fn (fn [{:keys [steps]}]
@@ -741,19 +741,19 @@
                       {:inject (fn [_]
                                  [{:path      [:steps]
                                    :name      "injected-step1"
-                                   :fn (fn [_ {:keys [steps]}]
+                                   :fn (fn [{:keys [steps]} _]
                                          (conj steps :injected-step1))}
                                   {:path      [:steps]
                                    :name      "injected-step2"
-                                   :fn (fn [_ {:keys [steps]}]
+                                   :fn (fn [{:keys [steps]} _]
                                          (conj steps :injected-step2))}])
                        :name   "injector1"}
                       {:path      [:steps]
                        :name      "processor2"
-                       :fn (fn [_ {:keys [steps]}]
+                       :fn (fn [{:keys [steps]} _]
                              (conj steps :step2))}]
                      exception-cb-throw
-                     (fn [res ctx] (is (= ctx {:steps [:step1 :mocked-injected-step1 :mocked-injected-step2 :step2]})) (done))
+                     (fn [ctx res] (is (= ctx {:steps [:step1 :mocked-injected-step1 :mocked-injected-step2 :step2]})) (done))
                      anomaly-cb-throw))))
 
 (deftest lonely-injector-with-one-step
@@ -767,7 +767,7 @@
                                                (conj steps :injected-step))})
                        :name   "injector1"}]
                      exception-cb-throw
-                     (fn [res ctx] (is (= ctx {:steps [:injected-step]})) (done))
+                     (fn [ctx res] (is (= ctx {:steps [:injected-step]})) (done))
                      anomaly-cb-throw))))
 
 (deftest lonely-injector-with-multiple-steps
@@ -781,11 +781,11 @@
                                            (conj steps :injected-step1))}
                                   {:path [:steps]
                                    :name "injected-step2"
-                                   :fn   (fn [_ {:keys [steps]}]
+                                   :fn   (fn [{:keys [steps]} _]
                                            (conj steps :injected-step2))}])
                        :name   "injector1"}]
                      exception-cb-throw
-                     (fn [res ctx]
+                     (fn [ctx res]
                        (is (= ctx {:steps [:injected-step1 :injected-step2]}))
                        (done))
                      anomaly-cb-throw))))
