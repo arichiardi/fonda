@@ -65,7 +65,7 @@
 
 (s/fdef fonda.execute/assoc-processor-result
   :args (s/cat :fonda-ctx ::fonda-context
-               :path ::step/path
+               :step ::step/processor-step
                :res any?))
 
 (s/fdef fonda.execute/assoc-tap-result
