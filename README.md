@@ -3,9 +3,22 @@ An async pipeline approach to functional core - imperative shell from by Gary Be
 
 ## Fork differences
 
+### Step callbacks
+Each step admits now the following keywords: `on-start`, `on-complete`, `on-success` and `on-error`.
+The values should be functions with the signature `(fn [ctx step-res]`. If the value is not a function, and a `callbacks-wrapper-fn` function is given
+on the configuration, and that function will be called with that value.
+
+### Global callbacks
+Global callbacks can now be a value that will be passed to the `callbacks-wrapper-fn`.
+
+### callbacks-wrapper-fn
+As described above, if a `callbacks-wrapper-fn` function is provided on the configuration, the steps and global callbacks can be values instead of functions,
+and those values will be passed to the callback wrapper function. It should have the signature `(fn [callback-value ctx step-res])`.
+Can be used to dispatch events instead of calling functions. And because the values of the step callbacks are now data, it can be tested.
+
 ### Steps and callback functions signature changed to receive the result from the previous step
-The first steps's function signature remains the same, but consequent steps signature has been changed to `(fn [prev-step-res ctx])`.
-The first argument is the result of the previous step, and the second the context, same as before.
+The first steps's function signature remains the same, but consequent steps receive one more argument `(fn [ctx prev-step-res])`.
+The first argument remains the same - the context - and the second argument is the result of the previous step.
 
 ### Path is now optional
 If a step doesn't define a `:path`,  the step will not augment the context, and the result of the step can only be used by the next step
@@ -97,6 +110,10 @@ The following section describes the parameters `fonda/execute` accepts.
     |---|---|---|
     | `:tap` | No | A function that gets the context but doesn't augment it. If it succeeds the result is ignored. If asynchronous it will still block the pipeline and interrupt the execution whenever either an anomaly or an exception happen. |
     | `:name` | Yes | The name of the step as string or keyword |
+    | `:on-start` | Yes | A function with the signature `(fn [ctx])`, of a value if `callbacks-wrapper-fn` is provided on the configuration. It is called before the step is executed |
+    | `:on-complete` | Yes | A function with the signature `(fn [ctx step-res-or-exception-or-anomaly])`, of a value if `callbacks-wrapper-fn` is provided on the configuration. Called after the step is executed |
+    | `:on-success` | Yes | A function with the signature `(fn [ctx step-res])`, of a value if `callbacks-wrapper-fn` is provided on the configuration. Called after the step sucessfully executed |
+    | `:on-error` | Yes | A function with the signature `(fn [ctx step-exception-or-anomaly])`, of a value if `callbacks-wrapper-fn` is provided on the configuration. Called when the step returns an exception or an anomaly. |
 
   - processor
 
@@ -105,7 +122,11 @@ The following section describes the parameters `fonda/execute` accepts.
     | `:processor` or `:fn`| No | A function that gets the context and returns data. The data is [assoced-in](https://clojuredocs.org/clojure.core/assoc-in) at the given path Can be asynchronous. If asynchronous it will still block the pipeline and interrupt the execution whenever either an anomaly or an exception happen. |
     | `:path` | Yes | Path where to assoc the result of the processor. If not given, the step will not augment the context. |
     | `:name` | Yes | The name of the step as string or keyword. |
-
+    | `:on-start` | Yes | Same as in tap |
+    | `:on-complete` | Yes | Same as in tap |
+    | `:on-success` | Yes | Same as in tap |
+    | `:on-error` | Yes | Same as in tap |
+    
   - injector
 
     | Key | Optional? | Notes |
@@ -114,9 +135,9 @@ The following section describes the parameters `fonda/execute` accepts.
     | `:name` | Yes | The name of the injector step as string or keyword |
 
 
-- **on-exception**          Function called with an exception when any of the steps throws one.
-- **on-success**            Function called with the context if all steps succeed.
-- [Optional] **on-anomaly** Function called in case of anomaly with the anomaly data itself.
+- **on-exception**          Function with the signature `(fn [ctx exception])` called with the context and an exception when any of the steps throws one.
+- **on-success**            Function with the signature `(fn [ctx last-step-result])` called with the context if all steps succeed, and the last step result.
+- [Optional] **on-anomaly** Function with the signature `(fn [ctx exception])` called in case of anomaly with the context and the anomaly data itself.
 
 
 ## Full Example
@@ -150,7 +171,11 @@ The following section describes the parameters `fonda/execute` accepts.
   ;; Doesn't run this function, instead it runs the provided mock
   [{:processor  :example.full/get-remote-thing
     :name       "get-remote-thing"
-    :path       [:remote-thing-response]}
+    :path       [:remote-thing-response]
+    :on-start (fn [ctx] (println "Going to fetch the remote thing")
+    :on-success (fn [ctx res] (println "got the remote thing with response:" res))
+    :on-error (fn [ctx err-or-anomaly] (println "error fetching the remote thing:" err-or-anomaly))
+    :on-complete (fn [ctx step-res-or-exception-or-anomaly] (println "Done fetching the remote thing, the result (or error) is:" step-res-or-exception-or-anomaly)))}
 
    {:tap        :example.full/print-remote-thing}
    

@@ -1,10 +1,10 @@
 (ns fonda.step.specs
   (:require [clojure.spec.alpha :as s]))
 
-(s/def ::on-start (s/nilable fn?))
-(s/def ::on-success (s/nilable fn?))
-(s/def ::on-error (s/nilable fn?))
-(s/def ::on-complete (s/nilable fn?))
+(s/def ::on-start (s/nilable any?))
+(s/def ::on-success (s/nilable any?))
+(s/def ::on-error (s/nilable any?))
+(s/def ::on-complete (s/nilable any?))
 (s/def ::is-anomaly-error? (s/nilable fn?))
 
 ;; Tap step

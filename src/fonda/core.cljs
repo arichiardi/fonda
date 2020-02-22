@@ -12,14 +12,16 @@
   Each step function - tap or processor - can be synchronous or asynchronous.
 
   - config: A map with:
-      - [opt] anomaly?           A function that gets a map and determines if it is an anomaly.
-      - [opt] ctx                The data that initializes the context. Must be a map.
-      - [opt] mock-fns           A map of functions that will replace the function on the step, matching the map
-                                 key with the step name
-      - [opt] anomaly-handlers   A map of functions indexed by step name that get called with a map
-                                 `{:ctx <ctx> :anomaly <anomaly>}` when the step returns an anomaly.
-      - [opt] exception-handlers A map of functions indexed by step name that get called with a map
-                                 `{:ctx <ctx> :exception <exception>}` when the step triggers an exception.
+      - [opt] anomaly?             A function that gets a map and determines if it is an anomaly.
+      - [opt] ctx                  The data that initializes the context. Must be a map.
+      - [opt] mock-fns             A map of functions that will replace the function on the step, matching the map
+                                   key with the step name
+      - [opt] anomaly-handlers     A map of functions indexed by step name that get called with a map
+                                   `{:ctx <ctx> :anomaly <anomaly>}` when the step returns an anomaly.
+      - [opt] exception-handlers   A map of functions indexed by step name that get called with a map
+                                   `{:ctx <ctx> :exception <exception>}` when the step triggers an exception.
+      - [opt] callbacks-wrapper-fn A function that gets called with the value of the on-* and the result of the step
+                                   `(fn [on-callback-val ctx step-res] ...)`
 
   - steps: Each item on the `steps` collection must be either a Tap, a Processor, or an Injector
 

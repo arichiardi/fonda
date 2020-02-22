@@ -9,7 +9,7 @@
 
 (def events (atom []))
 (defn cb-with-result [event]
-  (fn [result ctx]
+  (fn [ctx result]
     (swap! events conj [event result ctx])))
 
 (defn cb-no-result [event]
@@ -19,13 +19,13 @@
 
 (use-fixtures :each {:before (fn [] (reset! events []))})
 
-(defn success-cb-throw [res ctx]
+(defn success-cb-throw [ctx res]
   (throw (js/Error (str "unexpected success callback called with res:" res " and ctx:" ctx))))
 
-(defn exception-cb-throw [err]
+(defn exception-cb-throw [ctx err]
   (throw err))
 
-(defn anomaly-cb-throw [anomaly]
+(defn anomaly-cb-throw [ctx anomaly]
   (throw (js/Error (str "unexpected anomaly callback called with anomaly:" anomaly))))
 
 (defn anomaly
@@ -69,7 +69,7 @@
                        [processor]
                        exception-cb-throw
                        (fn [ctx res]
-                         (is (= processor-res (get-in ctx processor-path)))
+                         (is (= processor-res (get-in ctx processor-path) res))
                          (is (= @events [[::auth-success processor-res {:processor-path processor-res}]]))
                          (done)))))))
 
@@ -206,7 +206,7 @@
                        [processor]
                        exception-cb-throw
                        (fn [_])
-                       (fn [anomaly]
+                       (fn [ctx anomaly]
                          (is (= @anomaly-handler-arg processor-res))
                          (is (= processor-res anomaly))
                          (is (= @events [[::error anomaly {:processor-path anomaly}]]))
@@ -224,7 +224,7 @@
                        [processor]
                        exception-cb-throw
                        (fn [_])
-                       (fn [anomaly]
+                       (fn [ctx anomaly]
                          (is (= @anomaly-handler-arg processor-res))
                          (is (= processor-res anomaly)) (done)))))))
 
@@ -243,7 +243,7 @@
                        [processor]
                        exception-cb-throw
                        (fn [_])
-                       (fn [anomaly]
+                       (fn [ctx anomaly]
                          (is (= @anomaly-handler-arg mocked-processor-res))
                          (is (= mocked-processor-res anomaly)) (done)))))))
 
@@ -261,7 +261,7 @@
                        [tap]
                        exception-cb-throw
                        success-cb-throw
-                       (fn [anomaly]
+                       (fn [ctx anomaly]
                          (is (= @anomaly-handler-arg tap-res))
                          (is (= tap-res anomaly))
                          (done)))))))
@@ -280,7 +280,7 @@
                        [processor]
                        exception-cb-throw
                        success-cb-throw
-                       (fn [anomaly]
+                       (fn [ctx anomaly]
                          (is (= @anomaly-handler-arg processor-res))
                          (is (= processor-res anomaly))
                          (done)))))))
@@ -296,7 +296,7 @@
             exception-handler-arg (atom nil)]
         (fonda/execute {:exception-handlers {:step1 #(reset! exception-handler-arg (:exception %))}}
                        [processor]
-                       (fn [err]
+                       (fn [ctx err]
                          (is (= @exception-handler-arg processor-res))
                          (is (= processor-res err))
                          (done))
@@ -312,7 +312,7 @@
             exception-handler-arg (atom nil)]
         (fonda/execute {:exception-handlers {:step1 #(reset! exception-handler-arg (:exception %))}}
                        [tap]
-                       (fn [err]
+                       (fn [ctx err]
                          (is (= @exception-handler-arg tap-res))
                          (is (= tap-res err))
                          (done))
@@ -329,7 +329,7 @@
             exception-handler-arg (atom nil)]
         (fonda/execute {:exception-handlers {"step1" #(reset! exception-handler-arg (:exception %))}}
                        [processor]
-                       (fn [err]
+                       (fn [ctx err]
                          (is (= @exception-handler-arg processor-res))
                          (is (= processor-res err))
                          (done))
@@ -345,7 +345,7 @@
             exception-handler-arg (atom nil)]
         (fonda/execute {:exception-handlers {"step1" #(reset! exception-handler-arg (:exception %))}}
                        [processor]
-                       (fn [err]
+                       (fn [ctx err]
                          (is (nil? @exception-handler-arg))
                          (is (= processor-res err))
                          (done))
@@ -471,7 +471,7 @@
                          :fn (constantly 3)}]
                        exception-cb-throw
                        success-cb-throw
-                       (fn [anomaly]
+                       (fn [ctx anomaly]
                          (is (= @anomaly-handler-arg anomaly))
                          (is (= unsuccessful-anomaly anomaly) "it should call the on-anomaly callback with the anomaly data")
                          (done)))))))
@@ -525,7 +525,7 @@
                          :fn (fn [_] (swap! step3-counter inc))}]
                        exception-cb-throw
                        success-cb-throw
-                       (fn [anomaly]
+                       (fn [ctx anomaly]
                          (is (= @anomaly-handler-arg anomaly))
                          (is (and (= 1 @step1-counter)
                                   (= 0 @step3-counter))
@@ -556,7 +556,7 @@
                                  "not anomaly result")}]
 
                        exception-cb-throw
-                       (fn [res]
+                       (fn [ctx res]
                          (is (nil? @anomaly-handler-arg)
                              "The on-anomaly callback should not be called")
                          (is (= 1 @step1-counter)
@@ -582,7 +582,7 @@
 
                         {:path      [:step3]
                          :fn (fn [_] 1)}]
-                       (fn [err]
+                       (fn [ctx err]
                          (is (= @exception-handler-arg exception))
                          (is (= exception err) "it should call on-exception passing the js/Error")
                          (done))
@@ -604,7 +604,7 @@
 
                         {:path      [:step3]
                          :fn (fn [_] (swap! step3-counter inc))}]
-                       (fn [err]
+                       (fn [ctx err]
                          (is (and (= 1 @step1-counter)
                                   (= 0 @step3-counter))
                              "it should not call the previous but not the subsequent steps")
@@ -626,7 +626,7 @@
 
                         {:path      [:step3]
                          :fn (fn [_] (swap! step3-counter inc))}]
-                       (fn [err]
+                       (fn [ctx err]
                          (is (and (= 1 @step1-counter)
                                   (= 0 @step3-counter))
                              "it should not call the previous but not the subsequent steps")
@@ -770,6 +770,16 @@
                      (fn [ctx res] (is (= ctx {:steps [:injected-step]})) (done))
                      anomaly-cb-throw))))
 
+(deftest lonely-injector-returning-nil
+  (testing "If the injector doesn't return any value, it should not inject anything"
+    (async done
+      (fonda/execute {:ctx {:steps []}}
+                     [{:inject (fn [_])
+                       :name   "injector1"}]
+                     exception-cb-throw
+                     (fn [ctx res] (is (= ctx {:steps []})) (done))
+                     anomaly-cb-throw))))
+
 (deftest lonely-injector-with-multiple-steps
   (testing "Only one injector on the steps"
     (async done
@@ -789,3 +799,63 @@
                        (is (= ctx {:steps [:injected-step1 :injected-step2]}))
                        (done))
                      anomaly-cb-throw))))
+
+(deftest callbacks-wrapper-fn-global-on-success
+  (testing "If a callback wrapper is passed, it should be called with the value of the on-callbacks and the arguments
+  that normally would be passsed to the on-callback-fns."
+    (async done
+      (let [processor-res 42
+            on-success-event ::on-success-event
+            processor-path [:success-processor-path]
+            processor {:on-success (cb-with-result ::auth-success)
+                       :path processor-path
+                       :fn (constantly (js/Promise.resolve processor-res))}
+            ]
+        (fonda/execute {:callbacks-wrapper-fn (fn [cb-val ctx step-res]
+                                                (is (= cb-val on-success-event))
+                                                (is (= processor-res (get-in ctx processor-path) step-res))
+                                                (is (= @events [[::auth-success processor-res {(first processor-path) processor-res}]]))
+                                                (done))}
+                       [processor]
+                       exception-cb-throw
+                       on-success-event)))))
+
+(deftest callbacks-wrapper-fn-global-on-anomaly
+  (testing "If a callback wrapper is passed, it should be called with the value of the on-callbacks and the arguments
+  that normally would be passsed to the on-callback-fns."
+    (async done
+      (let [processor-anomaly (anomaly :cognitect.anomalies/incorrect)
+            on-anomaly-event ::on-anomaly-event
+            processor-path [:anomaly-processor-path]
+            processor {:on-error (cb-with-result ::anomaly-event)
+                       :path processor-path
+                       :fn (constantly processor-anomaly)}]
+        (fonda/execute {:callbacks-wrapper-fn (fn [cb-val ctx anomaly-res]
+                                                (is (= cb-val on-anomaly-event))
+                                                (is (= anomaly-res processor-anomaly))
+                                                (is (= @events [[::anomaly-event anomaly-res {(first processor-path) anomaly-res}]]))
+                                                (done))
+                        :anomaly? true}
+                       [processor]
+                       exception-cb-throw
+                       success-cb-throw
+                       on-anomaly-event)))))
+
+(deftest callbacks-wrapper-fn-global-on-exception
+  (testing "If a callback wrapper is passed, it should be called with the value of the on-callbacks and the arguments
+  that normally would be passsed to the on-callback-fns."
+    (async done
+      (let [processor-exception (js/Error "Bad exception")
+            on-exception-event ::on-exception-event
+            processor-path [:exception-processor-path]
+            processor {:on-error (cb-with-result ::exception-event)
+                       :path     processor-path
+                       :fn       (fn [_] (throw processor-exception))}]
+        (fonda/execute {:callbacks-wrapper-fn (fn [cb-val ctx exception-res]
+                                                (is (= cb-val on-exception-event))
+                                                (is (= exception-res processor-exception))
+                                                (is (= @events [[::exception-event exception-res {}]]))
+                                                (done))}
+                       [processor]
+                       on-exception-event
+                       success-cb-throw)))))

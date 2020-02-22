@@ -3,6 +3,20 @@
             [fonda.async :as a]
             [fonda.step :as st]))
 
+(defn get-callback-fn
+  [{:as fonda-ctx :keys [callbacks-wrapper-fn]} callback-val-or-fn]
+
+  (cond
+
+    ;; If the given callback is a function, calls it. It won't be wrapped
+    (fn? callback-val-or-fn) callback-val-or-fn
+
+    ;; If the given callback is a value, and there is a wrapper function, wraps it
+    (fn? callbacks-wrapper-fn) (partial callbacks-wrapper-fn callback-val-or-fn)
+
+    :else
+    callback-val-or-fn))
+
 (defn assoc-tap-result
   [{:as fonda-ctx :keys [anomaly-fn :processor-results-stack]} res]
   (let [anomaly? (and anomaly-fn (anomaly-fn res))
@@ -36,7 +50,10 @@
 
 (defn assoc-injector-result
   [{:as fonda-ctx :keys [queue]} res]
-  (let [steps (if (sequential? res) res [res])]
+  (let [steps (cond
+                (nil? res) []
+                (sequential? res) res
+                :else [res])]
     (assoc fonda-ctx :queue (into #queue [] st/xf (concat steps queue)))))
 
 (defn assoc-exception-result [fonda-ctx e]
@@ -46,7 +63,8 @@
 
 (defn handle-exception
   [{:as fonda-ctx :keys [ctx]} {:keys [on-error] :as step} e]
-  (when on-error (on-error e ctx))
+  (when on-error
+    ((get-callback-fn fonda-ctx on-error) ctx e))
   (when (:name step) (println "Exception on step " (:name step)))
   (assoc-exception-result fonda-ctx e))
 
@@ -54,20 +72,21 @@
   [{:as fonda-ctx :keys [anomaly-fn ctx]}
    {:keys [on-complete on-success on-error path is-anomaly-error?] :as step}
    step-res]
-
   (let [aug-ctx (if path (assoc-in ctx path step-res) ctx)]
 
     ;; Always calls on-complete
     (when on-complete
-      (on-complete step-res aug-ctx))
+      ((get-callback-fn fonda-ctx on-complete) aug-ctx step-res))
 
     (if (and anomaly-fn (anomaly-fn step-res) #_(is-anomaly-error? step-res))
 
       ;; If anomaly, calls on-error
-      (when on-error (on-error step-res aug-ctx))
+      (when on-error
+        ((get-callback-fn fonda-ctx on-error) aug-ctx step-res))
 
       ;; Otherwise calls on-success
-      (when on-success (on-success step-res aug-ctx)))))
+      (when on-success
+        ((get-callback-fn fonda-ctx on-success) aug-ctx step-res)))))
 
 (defn- try-step
   "Tries running the given step (a tap step, or a processor step).
@@ -77,7 +96,7 @@
    {:as step :keys [processor tap inject name on-start]}]
 
   ;; Calls the on-start callback with the context
-  (when on-start (on-start ctx))
+  (when on-start ((get-callback-fn fonda-ctx on-start) ctx))
   (try
     (let [last-res (last processor-results-stack)
 
@@ -91,14 +110,13 @@
           mocked-fn (when name (get mock-fns (keyword name)))
           f (or mocked-fn processor tap inject)
           res (apply f args)
-          assoc-result-fn (cond
+          assoc-result-fn* (cond
                             tap (partial assoc-tap-result fonda-ctx)
                             processor (partial assoc-processor-result fonda-ctx step)
-                            inject (partial assoc-injector-result fonda-ctx))]
-
-      ;; Invokes the callback functions
-      (invoke-post-callback-fns fonda-ctx step res)
-
+                            inject (partial assoc-injector-result fonda-ctx))
+          assoc-result-fn (fn [res]
+                            (invoke-post-callback-fns fonda-ctx step res)
+                            (assoc-result-fn* res))]
       (if (a/async? res)
         (a/continue res assoc-result-fn #(handle-exception fonda-ctx step %))
         (assoc-result-fn res)))
@@ -116,8 +134,8 @@
     (a/continue fonda-ctx deliver-result (:on-exception fonda-ctx))
     (let [[cb result] (cond exception [(:on-exception fonda-ctx) exception]
                             anomaly [(:on-anomaly fonda-ctx) anomaly]
-                            :else [(:on-success fonda-ctx) ctx])]
-      (cb result (last processor-results-stack)))))
+                            :else [(:on-success fonda-ctx) (last processor-results-stack)])]
+      ((get-callback-fn fonda-ctx cb) ctx result))))
 
 (defn execute-steps
   "Sequentially runs each of the steps.
@@ -173,6 +191,12 @@
    ;; step triggers an exception.
    exception-handlers
 
+   ;; A function with the signature (fn [on-callback-val step-res]) that, if provided, will be called on every
+   ;; callback (steps and globals). When provided, the callbacks can have any value - a function is not required anymore-
+   ;; and that value will be  passed to this function.
+   ;; Useful if you want to dispatch events instead of calling functions.
+   callbacks-wrapper-fn
+
    ;; Callback function that gets called with the context after all the steps succeeded
    on-success
 
@@ -221,19 +245,20 @@
 
   This function does config validation."
   [config]
-  (let [{:keys [anomaly? mock-fns ctx anomaly-handlers exception-handlers on-exception on-anomaly on-success steps]} config
+  (let [{:keys [anomaly? mock-fns ctx anomaly-handlers exception-handlers callbacks-wrapper-fn on-exception on-anomaly on-success steps]} config
         anomaly-fn (anomaly-fn anomaly?)]
     (assert (or (not anomaly-fn) (and anomaly-fn on-anomaly)) "When :anomaly? is truthy the on-anomaly callback is required.")
     (assert on-success "The on-success callback is required.")
     (assert on-exception "The on-exception callback is required.")
 
     (map->FondaContext
-      (merge {:anomaly-handlers   (clojure.walk/keywordize-keys anomaly-handlers)
-              :exception-handlers (clojure.walk/keywordize-keys exception-handlers)
-              :on-anomaly         on-anomaly
-              :on-exception       on-exception
-              :on-success         on-success
-              :mock-fns           (clojure.walk/keywordize-keys (or mock-fns {}))}
+      (merge {:anomaly-handlers     (clojure.walk/keywordize-keys anomaly-handlers)
+              :exception-handlers   (clojure.walk/keywordize-keys exception-handlers)
+              :callbacks-wrapper-fn callbacks-wrapper-fn
+              :on-anomaly           on-anomaly
+              :on-exception         on-exception
+              :on-success           on-success
+              :mock-fns             (clojure.walk/keywordize-keys (or mock-fns {}))}
              (when anomaly-fn
                {:anomaly-fn anomaly-fn})
              {:ctx                     (or ctx {})

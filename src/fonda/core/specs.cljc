@@ -15,10 +15,11 @@
 (s/def ::ctx map?)
 (s/def ::anomaly-handlers ::handlers-map)
 (s/def ::exception-handlers ::handlers-map)
+(s/def ::callbacks-wrapper-fn (s/nilable fn?))
 
-(s/def ::on-success fn?)
-(s/def ::on-exception fn?)
-(s/def ::on-anomaly (s/nilable fn?))
+(s/def ::on-success some?)
+(s/def ::on-exception some?)
+(s/def ::on-anomaly (s/nilable any?))
 
 (s/def ::step-name-map
   (s/keys :opt-un [::name]))
@@ -35,7 +36,8 @@
                    ::mock-fns
                    ::ctx
                    ::anomaly-handlers
-                   ::exception-handlers]))
+                   ::exception-handlers
+                   ::callbacks-wrapper-fn]))
 
 (s/fdef fonda.core/execute
   :args (s/cat :config ::config
