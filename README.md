@@ -7,7 +7,7 @@ An async pipeline approach to functional core - imperative shell from by Gary Be
 
 ### Step callbacks
 Each step admits now the following keywords: `on-start`, `on-complete`, `on-success` and `on-error`.
-The values should be functions with the signature `(fn [ctx step-res]`. If the value is not a function, and a `callbacks-wrapper-fn` function is given
+The values should be functions with the signature `(fn [ctx]`. If the value is not a function, and a `callbacks-wrapper-fn` function is given
 on the configuration, and that function will be called with that value.
 
 ### Global callbacks
@@ -18,9 +18,8 @@ As described above, if a `callbacks-wrapper-fn` function is provided on the conf
 and those values will be passed to the callback wrapper function. It should have the signature `(fn [callback-value ctx step-res])`.
 Can be used to dispatch events instead of calling functions. And because the values of the step callbacks are now data, it can be tested.
 
-### Steps and callback functions signature changed to receive the result from the previous step
-The first steps's function signature remains the same, but consequent steps receive one more argument `(fn [ctx prev-step-res])`.
-The first argument remains the same - the context - and the second argument is the result of the previous step.
+### Success callback functions signature changed to receive the result from the last step
+The first argument remains the same - the context - and the second argument is the result of the last step executed.
 
 ### Path is now optional
 If a step doesn't define a `:path`,  the step will not augment the context, and the result of the step can only be used by the next step
@@ -61,12 +60,12 @@ This example illustrates `fonda`'s basic mechanics:
    :path       [:github-things]}]
 
  ;; on-exception
- (fn [exception]
+ (fn [ctx exception]
    (handle-exception exception))
 
  ;; on-success
- (fn [res ctx]
-   (handle-success (:github-things res))))
+ (fn [ctx last-step-res]
+   (handle-success (:github-things last-step-res))))
 ```
 
 *HINT*: The parameter order makes it easy to partially apply `execute` for leaner call sites.
@@ -142,7 +141,7 @@ The following section describes the parameters `fonda/execute` accepts.
 
 - **on-exception**          Function with the signature `(fn [ctx exception])` called with the context and an exception when any of the steps throws one.
 - **on-success**            Function with the signature `(fn [ctx last-step-result])` called with the context if all steps succeed, and the last step result.
-- [Optional] **on-anomaly** Function with the signature `(fn [ctx exception])` called in case of anomaly with the context and the anomaly data itself.
+- [Optional] **on-anomaly** Function with the signature `(fn [ctx anomaly])` called in case of anomaly with the context and the anomaly data itself.
 
 
 ## Full Example
@@ -196,15 +195,15 @@ The following section describes the parameters `fonda/execute` accepts.
                                       (ajax/POST url remote-thing-params))}))))}]
 
   ;; on-exception
-  (fn [exception]
+  (fn [ctx exception]
    (handle-exception exception))
 
   ;; on-success
-  (fn [{:keys [remote-thing-processed]}]
+  (fn [{:keys [remote-thing-processed]} _]
    (handle-success remote-thing-processed))
 
   ;; on-anomaly
-  (fn [anomaly]
+  (fn [ctx anomaly]
    (handle-anomaly anomaly)))
 ```
 
