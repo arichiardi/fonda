@@ -74,4 +74,4 @@
 
 (s/fdef fonda.execute/assoc-injector-result
   :args (s/cat :fonda-ctx ::fonda-context
-               :res (s/or :step ::core/step :steps ::core/steps)))
+               :res (s/nilable (s/or :step ::core/step :steps ::core/steps))))
