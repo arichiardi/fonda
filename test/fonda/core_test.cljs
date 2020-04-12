@@ -726,10 +726,20 @@
                                  {:path      [:steps]
                                   :name      "injected-step"
                                   :fn (fn [{:keys [steps]}]
-                                        (conj steps :injected-step))})
+                                               (conj steps :injected-step))})
                        :name   "injector1"}]
                      exception-cb-throw
                      (fn [ctx res] (is (= ctx {:steps [:injected-step]})) (done))
+                     anomaly-cb-throw))))
+
+(deftest lonely-injector-returning-nil
+  (testing "If the injector doesn't return any value, it should not inject anything"
+    (async done
+      (fonda/execute {:ctx {:steps []}}
+                     [{:inject (fn [_])
+                       :name   "injector1"}]
+                     exception-cb-throw
+                     (fn [ctx res] (is (= ctx {:steps []})) (done))
                      anomaly-cb-throw))))
 
 (deftest lonely-injector-with-multiple-steps

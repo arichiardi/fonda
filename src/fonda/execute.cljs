@@ -50,7 +50,10 @@
 
 (defn assoc-injector-result
   [{:as fonda-ctx :keys [queue]} res]
-  (let [steps (if (sequential? res) res [res])]
+  (let [steps (cond
+                (nil? res) []
+                (sequential? res) res
+                :else [res])]
     (assoc fonda-ctx :queue (into #queue [] st/xf (concat steps queue)))))
 
 (defn assoc-exception-result [fonda-ctx e]
