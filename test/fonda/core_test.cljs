@@ -360,7 +360,6 @@
                         {:path [:step2] :fn (fn [{:keys [step1]}] (step2-fn step1))}]
                        exception-cb-throw
                        (fn [_ step2]
-                         (println "step2:" step2)
                          (is (= step2 (step2-fn step1-val)))
                          (done)))))))
 

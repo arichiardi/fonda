@@ -65,7 +65,6 @@
   [{:as fonda-ctx :keys [ctx]} {:keys [on-error] :as step} e]
   (when on-error
     ((get-callback-fn fonda-ctx on-error) ctx e))
-  (when (:name step) (println "Exception on step " (:name step)))
   (assoc-exception-result fonda-ctx e))
 
 (defn invoke-post-callback-fns
