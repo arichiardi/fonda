@@ -2,7 +2,6 @@
   (:require [cljs.test :refer-macros [deftest is testing async use-fixtures]]
             [fonda.core :as fonda]
             [fonda.core.specs]
-            [fonda.execute.specs]
             [orchestra-cljs.spec.test :as orchestra]))
 
 (orchestra/instrument)
@@ -187,7 +186,7 @@
                        :on-error (cb-with-result ::error)}
             anomaly-handler-arg (atom nil)]
         (fonda/execute {:anomaly?         true
-                        :anomaly-handlers {"step1" #(reset! anomaly-handler-arg (:anomaly %))}}
+                        :anomaly-handlers {:step1 #(reset! anomaly-handler-arg (:anomaly %))}}
                        [processor]
                        exception-cb-throw
                        (fn [_])
@@ -205,7 +204,7 @@
                        :fn (constantly processor-res)}
             anomaly-handler-arg (atom nil)]
         (fonda/execute {:anomaly?         true
-                        :anomaly-handlers {"step1" #(reset! anomaly-handler-arg (:anomaly %))}}
+                        :anomaly-handlers {:step1 #(reset! anomaly-handler-arg (:anomaly %))}}
                        [processor]
                        exception-cb-throw
                        (fn [_])
@@ -223,7 +222,7 @@
                        :fn (constantly processor-res)}
             anomaly-handler-arg (atom nil)]
         (fonda/execute {:anomaly?         true
-                        :anomaly-handlers {"step1" #(reset! anomaly-handler-arg (:anomaly %))}
+                        :anomaly-handlers {:step1 #(reset! anomaly-handler-arg (:anomaly %))}
                         :mock-fns {:step1 (constantly mocked-processor-res)}}
                        [processor]
                        exception-cb-throw
@@ -242,7 +241,7 @@
                  :tap  (constantly tap-res)}
             anomaly-handler-arg (atom nil)]
         (fonda/execute {:anomaly?         true
-                        :anomaly-handlers {"step1" #(reset! anomaly-handler-arg (:anomaly %))}}
+                        :anomaly-handlers {:step1 #(reset! anomaly-handler-arg (:anomaly %))}}
                        [tap]
                        exception-cb-throw
                        success-cb-throw
@@ -312,7 +311,7 @@
                        :name      "step1"
                        :fn (constantly (js/Promise.reject processor-res))}
             exception-handler-arg (atom nil)]
-        (fonda/execute {:exception-handlers {"step1" #(reset! exception-handler-arg (:exception %))}}
+        (fonda/execute {:exception-handlers {:step1 #(reset! exception-handler-arg (:exception %))}}
                        [processor]
                        (fn [ctx err]
                          (is (= @exception-handler-arg processor-res))
@@ -328,7 +327,7 @@
             processor {:path      [:processor-path]
                        :fn (constantly (js/Promise.reject processor-res))}
             exception-handler-arg (atom nil)]
-        (fonda/execute {:exception-handlers {"step1" #(reset! exception-handler-arg (:exception %))}}
+        (fonda/execute {:exception-handlers {:step1 #(reset! exception-handler-arg (:exception %))}}
                        [processor]
                        (fn [ctx err]
                          (is (nil? @exception-handler-arg))
@@ -444,7 +443,7 @@
       (let [unsuccessful-anomaly (anomaly :cognitect.anomalies/incorrect)
             anomaly-handler-arg (atom nil)]
         (fonda/execute {:anomaly?         true
-                        :anomaly-handlers {"step2" #(reset! anomaly-handler-arg (:anomaly %))}}
+                        :anomaly-handlers {:step2 #(reset! anomaly-handler-arg (:anomaly %))}}
                        [{:path      [:step1]
                          :fn (constantly (js/Promise.resolve 1))}
 
@@ -468,7 +467,7 @@
       (let [successful-anomaly (anomaly :cognitect.anomalies/incorrect)
             anomaly-handler-arg (atom nil)]
         (fonda/execute {:anomaly?         false
-                        :anomaly-handlers {"step2" #(reset! anomaly-handler-arg (:anomaly %))}}
+                        :anomaly-handlers {:step2 #(reset! anomaly-handler-arg (:anomaly %))}}
                        [{:path      [:step1]
                          :fn (constantly (js/Promise.resolve 1))}
 
@@ -497,10 +496,9 @@
             step3-counter (atom 0)
             anomaly-handler-arg (atom nil)]
         (fonda/execute {:anomaly?         true
-                        :anomaly-handlers {"step2" #(reset! anomaly-handler-arg (:anomaly %))}}
+                        :anomaly-handlers {:step2 #(reset! anomaly-handler-arg (:anomaly %))}}
                        [{:path      [:step1]
-                         :fn (fn [_]
-                                      (js/Promise.resolve (swap! step1-counter inc)))}
+                         :fn (fn [_] (js/Promise.resolve (swap! step1-counter inc)))}
 
                         {:path      [:step2]
                          :name      "step2"
@@ -525,7 +523,7 @@
             step3-atom (atom nil)
             anomaly-handler-arg (atom nil)]
         (fonda/execute {:anomaly?         true
-                        :anomaly-handlers {"step2" #(reset! anomaly-handler-arg (:anomaly %))}}
+                        :anomaly-handlers {:step2 #(reset! anomaly-handler-arg (:anomaly %))}}
                        [{:path      [:step1]
                          :fn (fn [_]
                                (js/Promise.resolve (swap! step1-counter inc)))}
@@ -556,10 +554,9 @@
     (async done
       (let [exception (js/Error "Bad exception")
             exception-handler-arg (atom nil)]
-        (fonda/execute {:exception-handlers {"step2" #(reset! exception-handler-arg (:exception %))}}
+        (fonda/execute {:exception-handlers {:step2 #(reset! exception-handler-arg (:exception %))}}
                        [{:path      [:step1]
-                         :fn (fn [_]
-                                      (js/Promise.resolve 1))}
+                         :fn (fn [_] (js/Promise.resolve 1))}
 
                         {:path      [:step2]
                          :name      "step2"
