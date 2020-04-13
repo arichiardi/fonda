@@ -1,7 +1,12 @@
-(ns fonda.example.simple
+(ns fonda.simple
   (:require [clojure.string :as str]
             [fonda.core :as fonda]
-            [goog.object :as gobj]))
+            [fonda.core.specs]
+            [goog.object :as gobj]
+            [orchestra-cljs.spec.test :as orchestra]
+            [process]))
+
+(orchestra/instrument)
 
 (defn response->loads-of-data
   [ctx]
@@ -15,31 +20,28 @@
     (str/split dd "-")
     (str/join " " dd)))
 
-(fonda/execute
- {}
+(defn main [& cli-args]
+  (fonda/execute
+   {:ctx {:data :very-little}}
 
- [{:processor      (fn [ctx]
-                     {:status 200
-                      :headers {"Content-Type" "application/json"}
-                      :body {:data :loads-of}})
-   :name           "get-loads-of-data"
-   :path           [:http-response]}
+   [{:processor      (fn [ctx]
+                       {:status 200
+                        :headers {"Content-Type" "application/json"}
+                        :body {:data :loads-of}})
+     :name           "get-loads-of-data"
+     :path           [:http-response]}
 
-  {:processor      response->loads-of-data   ;; Pure function - ctx in - ctx out
-   :name           "response-processor"
-   :path           [:data]}]
+    {:processor      response->loads-of-data   ;; Pure function - ctx in - ctx out
+     :name           "response-processor"
+     :path           [:data]}]
 
- {:data :very-little}
+   ;; on-exception
+   (fn [ctx exception]
+     (println (gobj/get exception "message"))
+     (process/exit 1))
 
- ;; on-success
- (fn [ctx]
-   (println "Before we had" (-> ctx :data :before to-str) "data,"
-            "but now we have" (-> ctx :data :after to-str) "it."))
-
- ;; on-anomaly
- (fn [anomaly]
-   (println "Anomaly detected in the matrix"))
-
- ;; on-exception
- (fn [exception]
-   (println (gobj/get exception "message"))))
+   ;; on-success
+   (fn [ctx last-step-result]
+     (println "Before we had" (-> ctx :data :before to-str) "data,"
+              "but now we have" (-> ctx :data :after to-str) "it.")
+     (process/exit 0))))
