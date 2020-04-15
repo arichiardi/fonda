@@ -77,7 +77,7 @@
     (when on-complete
       ((get-callback-fn fonda-ctx on-complete) aug-ctx step-res))
 
-    (if (and anomaly-fn (anomaly-fn step-res) #_(is-anomaly-error? step-res))
+    (if (and anomaly-fn (anomaly-fn step-res) (is-anomaly-error? step-res))
 
       ;; If anomaly, calls on-error
       (when on-error

@@ -54,13 +54,12 @@
 
 (defn step->record
   [{:keys [tap inject fn processor] :as step}]
-  (let [step
-        (cond
-          tap (map->Tap (update step :tap resolve-function))
-          (or processor fn) (map->Processor (-> step
-                                                (update :fn resolve-function)
-                                                (assoc :is-anomaly-error? (or (:is-anomaly-error? step) (constantly true)))))
-          inject (map->Injector (update step :inject resolve-function)))]
-    (update step :name keyword)))
+  (let [step (cond
+               tap (map->Tap (update step :tap resolve-function))
+               (or processor fn) (map->Processor (update step :fn resolve-function))
+               inject (map->Injector (update step :inject resolve-function)))]
+    (-> step
+        (update :name keyword)
+        (assoc :is-anomaly-error? (constantly true)))))
 
 (def ^{:doc "Step transducer."} xf (map step->record))
