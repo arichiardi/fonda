@@ -1,4 +1,4 @@
-{:deps   {:aliases [:dev :test]}
+{:deps   {:aliases [:dev :test :example]}
  :builds {:lib  {:target    :node-library
                  :output-to "dist/fonda.js"
                  :exports   {:execute fonda.core/execute}
@@ -18,4 +18,9 @@
                                                 :pretty-print      true
                                                 :source-map        true
                                                 :elide-asserts     false}
-                             :autorun          false}}}}
+                             :autorun          false}}
+
+          :simple-example {:target :node-script
+                           :main fonda.simple/main
+                           :output-to "dist/simple-example.js"
+                           :devtools  {:preloads [fonda.test-preload]}}}}
